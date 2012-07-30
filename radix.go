@@ -31,7 +31,7 @@ type Radix struct {
 	// children maps the first letter of each child to the child itself, e.g. "a" -> "ab", "x" -> "xyz", "y" -> "yza", ...
 	children map[byte]*Radix
 	key      string
-	parent  *Radix		// a pointer back to the parent
+	parent   *Radix // a pointer back to the parent
 
 	// The contents of the radix node.
 	Value interface{}
@@ -53,9 +53,49 @@ func (r *Radix) Children() map[byte]*Radix {
 	return nil
 }
 
-// Parent retuns the parent of r or nil in case of the root node.
+// Parent returns the parent of r or nil in case of the root node.
 func (r *Radix) Parent() *Radix {
 	return r.parent
+}
+
+// Next returns the next node. Next sorts all children and returns the one
+// following the current node. If nothing is found, we go to the parent node
+// and return the smallest value we find there.
+func (r *Radix) Next() *Radix {
+	// In the current node, we need to get the next child, this can only
+	// work if we look at the parent's children and get the next one there.
+	var last *Radix
+	var child map[byte]*Radix
+Search:
+	child = r.children
+	if r.parent != nil {
+		child = r.parent.children
+	}
+	for _, c := range child {
+		if c.key == r.key {
+			// looking at myself
+			continue
+		}
+		if last == nil {
+			if c.key > r.key {
+				last = c
+			}
+			continue
+		}
+		// Value larger then r.key and smaller than the last larger value
+		if c.key > r.key && c.key < last.key {
+			last = c
+		}
+	}
+	if last == nil {
+		// Found nothing in this node -- go one up if possible
+		if r.parent == nil {
+			return r
+		}
+		r = r.parent
+		goto Search
+	}
+	return last
 }
 
 func longestCommonPrefix(key, bar string) (string, int) {

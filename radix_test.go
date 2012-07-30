@@ -9,7 +9,7 @@ func printit(r *Radix, level int) {
 	for i := 0; i < level; i++ {
 		fmt.Print("\t")
 	}
-	fmt.Printf("'%v'  value: %v\n", r.key, r.Value)
+	fmt.Printf("'%v'  value: %v    parent %p\n", r.key, r.Value, r.parent)
 	for _, child := range r.children {
 		printit(child, level+1)
 	}
@@ -20,6 +20,7 @@ func radixtree() *Radix {
 	r.Insert("test", nil)
 	r.Insert("slow", nil)
 	r.Insert("water", nil)
+	r.Insert("watsol", nil)
 	r.Insert("tester", nil)
 	r.Insert("testering", nil)
 	r.Insert("rewater", nil)
@@ -37,6 +38,27 @@ func validate(r *Radix) bool {
 		validate(child)
 	}
 	return true
+}
+
+func TestPrint(t *testing.T) {
+	r := radixtree()
+	printit(r, 0)
+}
+
+func TestNext(t *testing.T) {
+	r := radixtree()
+	f := r.Find("watsol")
+
+	if f != nil {
+		println("Found:", f.key)
+		n := f.Next()
+		if n != nil {
+			println("Next: ", n.key)
+		}
+	}
+	println(r.Find("rewater").Next().Next().key)
+	println(r.Find("water").Next().Next().key)
+	println(r.Find("waterrat").Next().Next().Next().Next().key)
 }
 
 func TestInsert(t *testing.T) {
@@ -102,8 +124,8 @@ func BenchmarkFind(b *testing.B) {
 }
 
 func iter(r *Radix, prefix string) {
-	fmt.Printf("prefix %s\n", prefix + r.Key())
+	fmt.Printf("prefix %s\n", prefix+r.Key())
 	for _, child := range r.Children() {
-		iter(child, prefix + r.Key())
+		iter(child, prefix+r.Key())
 	}
 }
