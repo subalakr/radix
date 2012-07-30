@@ -31,6 +31,7 @@ type Radix struct {
 	// children maps the first letter of each child to the child itself, e.g. "a" -> "ab", "x" -> "xyz", "y" -> "yza", ...
 	children map[byte]*Radix
 	key      string
+	parent  *Radix		// a pointer back to the parent
 
 	// The contents of the radix node.
 	Value interface{}
@@ -73,7 +74,7 @@ func (r *Radix) Insert(key string, value interface{}) *Radix {
 	// if there is no child with the same starting letter, insert a new one
 	child, ok := r.children[key[0]]
 	if !ok {
-		r.children[key[0]] = &Radix{make(map[byte]*Radix), key, value}
+		r.children[key[0]] = &Radix{make(map[byte]*Radix), key, r, value}
 		return r.children[key[0]]
 	}
 
@@ -94,7 +95,7 @@ func (r *Radix) Insert(key string, value interface{}) *Radix {
 	// if current child is "abc" and key is "abx", we need to create a new child "ab" with two sub children "c" and "x"
 
 	// create new child node to replace current child
-	newChild := &Radix{make(map[byte]*Radix), commonPrefix, nil}
+	newChild := &Radix{make(map[byte]*Radix), commonPrefix, r, nil}
 
 	// replace child of current node with new child: map first letter of common prefix to new child
 	r.children[commonPrefix[0]] = newChild
@@ -119,13 +120,12 @@ func (r *Radix) Insert(key string, value interface{}) *Radix {
 // Find returns the node associated with key. All childeren of this node share the same prefix
 func (r *Radix) Find(key string) *Radix {
 	// look up the child starting with the same letter as key
-	// if there is no child with the same starting letter, return false
 	child, ok := r.children[key[0]]
 	if !ok {
 		return nil
 	}
 
-	// check if the end of our string is found and return .isEnd
+	// check if the end of our string is found and return
 	if key == child.key {
 		return child
 	}
@@ -225,5 +225,5 @@ func (r *Radix) Len() int {
 
 // New returns an initialized radix tree.
 func New() *Radix {
-	return &Radix{make(map[byte]*Radix), "", nil}
+	return &Radix{make(map[byte]*Radix), "", nil, nil}
 }
