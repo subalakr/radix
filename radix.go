@@ -53,6 +53,11 @@ func (r *Radix) Children() map[byte]*Radix {
 	return nil
 }
 
+// Parent retuns the parent of r or nil in case of the root node.
+func (r *Radix) Parent() *Radix {
+	return r.parent
+}
+
 func longestCommonPrefix(key, bar string) (string, int) {
 	if key == "" || bar == "" {
 		return "", 0
@@ -145,8 +150,6 @@ func (r *Radix) Find(key string) *Radix {
 // Remove removes any value set to key. It returns the removed node or nil if the
 // node cannot be found.
 func (r *Radix) Remove(key string) *Radix {
-	// look up the child starting with the same letter as key
-	// if there is no child with the same starting letter, return
 	child, ok := r.children[key[0]]
 	if !ok {
 		return nil
@@ -165,6 +168,7 @@ func (r *Radix) Remove(key string) *Radix {
 				child.key = child.key + subchild.key
 				child.Value = subchild.Value
 				child.children = subchild.children
+				child.parent = r
 			}
 		default:
 			// if there are >= 2 subchilds, we can only set the value to nil, thus delete any value set to key
@@ -173,16 +177,13 @@ func (r *Radix) Remove(key string) *Radix {
 		return child
 	}
 
-	// key != child.keys
+	// Node has not been foundJ, key != child.keys
 
-	// commonPrefix is now the longest common substring of key and child.key [e.g. only "ab" from "abab" is contained in "abba"]
 	commonPrefix, prefixEnd := longestCommonPrefix(key, child.key)
-
 	// if child.key is not completely contained in key, abort [e.g. trying to delete "ab" from "abc"]
 	if child.key != commonPrefix {
 		return nil
 	}
-
 	// else: cut off common prefix and delete left string in child
 	return child.Remove(key[prefixEnd:])
 }
