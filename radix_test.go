@@ -15,6 +15,23 @@ func printit(r *Radix, level int) {
 	}
 }
 
+func radixsimpletree() *Radix {
+	r := New()
+	r.Insert("a", nil)
+	r.Insert("b", nil)
+	r.Insert("c", nil)
+	return r
+}
+
+func radixsimpletree2() *Radix {
+	r := New()
+	r.Insert("aa", nil)
+	r.Insert("bb", nil)
+	r.Insert("cc", nil)
+	r.Insert("cd", nil)
+	return r
+}
+
 func radixtree() *Radix {
 	r := New()
 	r.Insert("test", nil)
@@ -45,20 +62,22 @@ func TestPrint(t *testing.T) {
 	printit(r, 0)
 }
 
-func TestNext(t *testing.T) {
-	r := radixtree()
-	f := r.Find("watsol")
+func TestNextSimple(t *testing.T) {
+	r := radixsimpletree()
+	printit(r, 0)
+	println("a", r.Find("a").Next().key)
+	println("b", r.Find("b").Next().key)
+	println("c", r.Find("c").Next().key)
+	println("c", r.Find("c").Next().Next().key)
+}
 
-	if f != nil {
-		println("Found:", f.key)
-		n := f.Next()
-		if n != nil {
-			println("Next: ", n.key)
-		}
-	}
-	println(r.Find("rewater").Next().Next().key)
-	println(r.Find("water").Next().Next().key)
-	println(r.Find("waterrat").Next().Next().Next().Next().key)
+func TestNextSimple2(t *testing.T) {
+	r := radixsimpletree2()
+	printit(r, 0)
+	println("aa", r.Find("aa").Next().key)
+	println("bb", r.Find("bb").Next().key)
+	println("cc", r.Find("cc").Next().key)
+	println("cd", r.Find("cd").Next().key)
 }
 
 func TestInsert(t *testing.T) {

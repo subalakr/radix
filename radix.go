@@ -72,6 +72,7 @@ Search:
 		child = r.parent.children
 	}
 	for _, c := range child {
+		println("c", c.key, "r", r.key)
 		if c.key == r.key {
 			// looking at myself
 			continue
