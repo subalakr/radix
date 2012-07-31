@@ -6,6 +6,8 @@
 //    October 1968                                                                                  
 //
 // Also see http://en.wikipedia.org/wiki/Radix_tree for more information.
+// This package implements an unsorted radix tree, however successor and predecessor
+// functions are available.
 //
 // Basic use pattern for iterating over a radix tree:
 //
