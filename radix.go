@@ -131,9 +131,14 @@ func (r *Radix) Find(key string) *Radix {
 	if child.key != commonPrefix {
 		return nil
 	}
+	// TODO(mg): if U
 
 	// find the key left of key in child
 	return child.Find(key[prefixEnd:])
+}
+
+// Prefix returns a slice with all the keys that share this prefix.
+func (r *Radix) Prefix(prefix string) []string {
 }
 
 // Remove removes any value set to key. It returns the removed node or nil if the
