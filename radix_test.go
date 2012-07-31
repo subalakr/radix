@@ -102,6 +102,13 @@ func ExampleFind() {
 	// prefix testeringandmore
 }
 
+func iter(r *Radix) {
+	fmt.Printf("prefix %s\n", r.Key())
+	for _, child := range r.Children() {
+		iter(child)
+	}
+}
+
 func BenchmarkFind(b *testing.B) {
 	b.StopTimer()
 	r := radixtree()
@@ -112,9 +119,3 @@ func BenchmarkFind(b *testing.B) {
 	}
 }
 
-func iter(r *Radix) {
-	fmt.Printf("prefix %s\n", r.Key())
-	for _, child := range r.Children() {
-		iter(child)
-	}
-}
