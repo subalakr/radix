@@ -39,6 +39,12 @@ func validate(r *Radix) bool {
 	return true
 }
 
+func TestPrefix(t *testing.T) {
+	r := radixtree()
+	prexs := r.CommonPrefix("te")
+	t.Logf("%v\n", prexs)
+}
+
 func TestInsert(t *testing.T) {
 	r := New()
 	if !validate(r) {
@@ -89,6 +95,12 @@ func ExampleFind() {
 	// prefix tester
 	// prefix testering
 	// prefix testeringandmore
+}
+
+func TestKeys(t *testing.T) {
+	r := radixtree()
+	printit(r, 0)
+	fmt.Printf("%+v\n", r.Keys()
 }
 
 func BenchmarkFind(b *testing.B) {

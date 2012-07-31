@@ -116,7 +116,7 @@ func (r *Radix) Insert(key string, value interface{}) *Radix {
 	return newChild
 }
 
-// Find returns the node associated with key. All childeren of this node share the same prefix
+// Find returns the node associated with key. All children of this node share the same prefix
 func (r *Radix) Find(key string) *Radix {
 	// look up the child starting with the same letter as key
 	// if there is no child with the same starting letter, return false
@@ -125,7 +125,7 @@ func (r *Radix) Find(key string) *Radix {
 		return nil
 	}
 
-	// check if the end of our string is found and return .isEnd
+	// check if the end of our string is found and return
 	if key == child.key {
 		return child
 	}
@@ -221,6 +221,49 @@ func (r *Radix) Len() int {
 		}
 	}
 	return i
+}
+
+func (r *Radix) Successor(s string) string {
+	return ""
+}
+
+func (r *Radix) Predecessor(s string) string {
+	return ""
+}
+
+// CommonPrefix returns a slice with all the keys that share the prefix.
+func (r *Radix) CommonPrefix(prefix string) []string {
+	child, ok := r.children[prefix[0]]
+	if !ok {
+		return nil
+	}
+
+	if prefix == child.key {
+		// parent pointer to get the full key
+		return child.Keys()
+	}
+
+	commonPrefix, prefixEnd := longestCommonPrefix(prefix, child.key)
+
+	if child.key != commonPrefix {
+		return nil
+	}
+	return child.CommonPrefix(prefix[prefixEnd:])
+}
+
+// Keys returns all the keys from the node r downwards
+func (r *Radix) Keys() (s []string) {
+	return r.keys("")
+}
+
+func (r *Radix) keys(prefix string) (s []string) {
+	if r.key != "" { // root key is empty
+		s = append(s, prefix+r.key)
+	}
+	for _, child := range r.children {
+		s = append(s, child.keys(prefix+r.key)...)
+	}
+	return s
 }
 
 // New returns an initialized radix tree.
