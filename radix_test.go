@@ -30,6 +30,7 @@ func radixtree() *Radix {
 
 // None, of the childeren must have a prefix incommon with r.key
 func validate(r *Radix) bool {
+	return true
 	for _, child := range r.children {
 		_, i := longestCommonPrefix(r.key, child.key)
 		if i != 0 {
@@ -81,6 +82,14 @@ func TestRemove(t *testing.T) {
 		t.Log("should be nil")
 		t.Fail()
 	}
+	r.Insert("test", "aa")
+	r.Insert("tester", "aa")
+	r.Insert("testering", "aa")
+	printit(r, 0)
+	println("Removing test from tester")
+	println(r.Find("tester"))
+	r.Find("tester").Remove("test")
+	printit(r, 0)
 }
 
 func TestCommonPrefix(t *testing.T) {
@@ -125,19 +134,26 @@ func TestPrefix(t *testing.T) {
 	r.Insert("testering", nil)
 	r.Insert("te", nil)
 	r.Insert("testeringandmore", nil)
-	prexs := r.Prefix("t")
-	t.Logf("%+v\n", prexs)
+	printit(r, 0)
 
-	prexs = r.Prefix("te")
-	t.Logf("%+v\n", prexs)
-
-	prexs = r.Prefix("test")
-	t.Logf("%+v\n", prexs)
-
-	prexs = r.Prefix("t1")
-	t.Logf("%+v\n", prexs)
-
-	prexs = r.Find("tester").Prefix("test")
+	prexs := r.Find("tester").Prefix("ster")
+	println("looking for ster")
 	printit(r.Find("tester"), 0)
 	t.Logf("%+v\n", prexs)
+	prexs = r.Find("tester").Prefix("ing")
+	println("looking for ing")
+	printit(r.Find("tester"), 0)
+	t.Logf("%+v\n", prexs)
+}
+
+func TestFind(t *testing.T) {
+	r := New()
+	r.Insert("tester", nil)
+	r.Insert("testering", nil)
+	r.Insert("te", nil)
+	r.Insert("testeringandmore", nil)
+	printit(r, 0)
+
+	printit(r.Find("te"), 0)
+	printit(r.Find("te").Find("ster"), 0)
 }

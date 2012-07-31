@@ -20,6 +20,7 @@
 package radix
 
 // Radix represents a radix tree.
+// The key of the root node of a tree is always empty.
 type Radix struct {
 	// children maps the first letter of each child to the child.
 	children map[byte]*Radix
@@ -61,7 +62,7 @@ func longestCommonPrefix(key, bar string) (string, int) {
 }
 
 // Insert inserts the value into the tree with the specified key. It returns the radix node
-// it just inserted.
+// it just inserted. Insert must be called on the root of the tree.
 func (r *Radix) Insert(key string, value interface{}) *Radix {
 	// look up the child starting with the same letter as key
 	// if there is no child with the same starting letter, insert a new one
@@ -104,8 +105,9 @@ func (r *Radix) Insert(key string, value interface{}) *Radix {
 	return newChild
 }
 
-// Find returns the node associated with key. All childeren of this node share the same prefix.
-// Find needs to start from the root node.
+// Find returns the node associated with key. All childeren of this node share the same prefix,
+// r does not have to be the root of the radix tree, but it starts be looking at the children
+// of the current node.
 func (r *Radix) Find(key string) *Radix {
 	child, ok := r.children[key[0]]
 	if !ok {
@@ -138,6 +140,10 @@ func (r *Radix) Prefix(prefix string) []string {
 }
 
 func (r *Radix) prefix(prefix string) *Radix {
+	if r.key == prefix {
+		return r
+	}
+
 	child, ok := r.children[prefix[0]]
 	if !ok {
 		return nil
