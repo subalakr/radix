@@ -105,6 +105,7 @@ func (r *Radix) Insert(key string, value interface{}) *Radix {
 }
 
 // Find returns the node associated with key. All childeren of this node share the same prefix.
+// Find needs to start from the root node.
 func (r *Radix) Find(key string) *Radix {
 	child, ok := r.children[key[0]]
 	if !ok {
@@ -126,7 +127,8 @@ func (r *Radix) Find(key string) *Radix {
 	return child.Find(key[prefixEnd:])
 }
 
-// Prefix returns a slice with all the keys that share this prefix.
+// Prefix returns a slice with all the keys that share this prefix. Prefix
+// needs to start from the root node.
 func (r *Radix) Prefix(prefix string) []string {
 	bestfit := r.prefix(prefix)
 	if bestfit == nil {
@@ -143,12 +145,11 @@ func (r *Radix) prefix(prefix string) *Radix {
 	if prefix == child.key {
 		return child
 	}
-	// Hmmm, this part need to look at it TODO(mg)
+	// The whole of the prefix is contained in the child's key
 	_, prefixEnd := longestCommonPrefix(prefix, child.key)
 	if prefixEnd+1 > len(prefix) {
 		return child
 	}
-	println("prefixend", prefixEnd, prefix, child.key)
 	return child.prefix(prefix[prefixEnd:])
 }
 

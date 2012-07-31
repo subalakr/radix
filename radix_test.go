@@ -136,4 +136,8 @@ func TestPrefix(t *testing.T) {
 
 	prexs = r.Prefix("t1")
 	t.Logf("%+v\n", prexs)
+
+	prexs = r.Find("tester").Prefix("test")
+	printit(r.Find("tester"), 0)
+	t.Logf("%+v\n", prexs)
 }
