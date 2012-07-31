@@ -9,27 +9,10 @@ func printit(r *Radix, level int) {
 	for i := 0; i < level; i++ {
 		fmt.Print("\t")
 	}
-	fmt.Printf("'%v'  value: %v    parent %p\n", r.key, r.Value, r.parent)
+	fmt.Printf("%p '%v'  value: %v    parent %p\n", r, r.key, r.Value, r.parent)
 	for _, child := range r.children {
 		printit(child, level+1)
 	}
-}
-
-func radixsimpletree() *Radix {
-	r := New()
-	r.Insert("a", nil)
-	r.Insert("b", nil)
-	r.Insert("c", nil)
-	return r
-}
-
-func radixsimpletree2() *Radix {
-	r := New()
-	r.Insert("aa", nil)
-	r.Insert("bb", nil)
-	r.Insert("cc", nil)
-	r.Insert("cd", nil)
-	return r
 }
 
 func radixtree() *Radix {
@@ -60,24 +43,6 @@ func validate(r *Radix) bool {
 func TestPrint(t *testing.T) {
 	r := radixtree()
 	printit(r, 0)
-}
-
-func TestNextSimple(t *testing.T) {
-	r := radixsimpletree()
-	printit(r, 0)
-	println("a", r.Find("a").Next().key)
-	println("b", r.Find("b").Next().key)
-	println("c", r.Find("c").Next().key)
-	println("c", r.Find("c").Next().Next().key)
-}
-
-func TestNextSimple2(t *testing.T) {
-	r := radixsimpletree2()
-	printit(r, 0)
-	println("aa", r.Find("aa").Next().key)
-	println("bb", r.Find("bb").Next().key)
-	println("cc", r.Find("cc").Next().key)
-	println("cd", r.Find("cd").Next().key)
 }
 
 func TestInsert(t *testing.T) {
@@ -118,14 +83,19 @@ func TestRemove(t *testing.T) {
 	}
 }
 
+func TestCommonPrefix(t *testing.T) {
+	r := radixtree()
+	f := r.Find("tester")
+	t.Logf("%s %+v\n", f.key, f.Keys())
+}
+
 func ExampleFind() {
 	r := New()
 	r.Insert("tester", nil)
 	r.Insert("testering", nil)
 	r.Insert("te", nil)
 	r.Insert("testeringandmore", nil)
-	f := r.Find("tester")
-	iter(f, f.Prefix("tester"))
+	iter(r.Find("tester"))
 	// Output:
 	// prefix tester
 	// prefix testering
@@ -142,9 +112,9 @@ func BenchmarkFind(b *testing.B) {
 	}
 }
 
-func iter(r *Radix, prefix string) {
-	fmt.Printf("prefix %s\n", prefix+r.Key())
+func iter(r *Radix) {
+	fmt.Printf("prefix %s\n", r.Key())
 	for _, child := range r.Children() {
-		iter(child, prefix+r.Key())
+		iter(child)
 	}
 }

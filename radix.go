@@ -7,24 +7,17 @@
 //
 // Also see http://en.wikipedia.org/wiki/Radix_tree for more information.
 //
-// Basic use pattern for iterating over a radix tree and retrieving the full
-// keys under which nodes are stored:
+// Basic use pattern for iterating over a radix tree:
 //
-//	func iter(r *Radix, prefix string) {
+//	func iter(r *Radix) {
 //		// Current key is r.Key()
-//		// The full key would be prefix + r.Key()
 //		for _, child := range r.Children() {
-//			iter(child, prefix + r.Key()
+//			iter(child)
 //		}
 //	}
 //
-//	f := r.Find("tester")		// Look for "tester"
-//	iter(f, f.Prefix("tester"))	// Get all the keys from "tester" down
+//	iter(r.Find("tester"))		// Iterate from "tester" down
 package radix
-
-import (
-	"strings"
-)
 
 // Radix represents a radix tree.
 type Radix struct {
@@ -37,12 +30,12 @@ type Radix struct {
 	Value interface{}
 }
 
-// Key returns the (partial) key under which r is stored.
-func (r *Radix) Key() string {
-	if r != nil {
-		return r.key
+// Key returns the full key under which r is stored.
+func (r *Radix) Key() (s string) {
+	for p := r; p != nil; p = p.parent {
+		s = p.key + s
 	}
-	return ""
+	return
 }
 
 // Children returns the children of r or nil if there are none.
@@ -51,52 +44,6 @@ func (r *Radix) Children() map[byte]*Radix {
 		return r.children
 	}
 	return nil
-}
-
-// Parent returns the parent of r or nil in case of the root node.
-func (r *Radix) Parent() *Radix {
-	return r.parent
-}
-
-// Next returns the next node. Next sorts all children and returns the one
-// following the current node. If nothing is found, we go to the parent node
-// and return the smallest value we find there.
-func (r *Radix) Next() *Radix {
-	// In the current node, we need to get the next child, this can only
-	// work if we look at the parent's children and get the next one there.
-	var last *Radix
-	var child map[byte]*Radix
-Search:
-	child = r.children
-	if r.parent != nil {
-		child = r.parent.children
-	}
-	for _, c := range child {
-		println("c", c.key, "r", r.key)
-		if c.key == r.key {
-			// looking at myself
-			continue
-		}
-		if last == nil {
-			if c.key > r.key {
-				last = c
-			}
-			continue
-		}
-		// Value larger then r.key and smaller than the last larger value
-		if c.key > r.key && c.key < last.key {
-			last = c
-		}
-	}
-	if last == nil {
-		// Found nothing in this node -- go one up if possible
-		if r.parent == nil {
-			return r
-		}
-		r = r.parent
-		goto Search
-	}
-	return last
 }
 
 func longestCommonPrefix(key, bar string) (string, int) {
@@ -141,7 +88,7 @@ func (r *Radix) Insert(key string, value interface{}) *Radix {
 	// if current child is "abc" and key is "abx", we need to create a new child "ab" with two sub children "c" and "x"
 
 	// create new child node to replace current child
-	newChild := &Radix{make(map[byte]*Radix), commonPrefix, r, nil}
+	newChild := &Radix{make(map[byte]*Radix), commonPrefix, nil, nil}
 
 	// replace child of current node with new child: map first letter of common prefix to new child
 	r.children[commonPrefix[0]] = newChild
@@ -151,6 +98,7 @@ func (r *Radix) Insert(key string, value interface{}) *Radix {
 
 	// map old child's new first letter to old child as a child of the new child
 	newChild.children[child.key[0]] = child
+	child.parent = newChild	// update the pointer of the current child which is moved down
 
 	// if there are key left of key, insert them into our new child
 	if key != newChild.key {
@@ -163,7 +111,7 @@ func (r *Radix) Insert(key string, value interface{}) *Radix {
 	return newChild
 }
 
-// Find returns the node associated with key. All childeren of this node share the same prefix
+// Find returns the node associated with key. All childeren of this node share the same prefix.
 func (r *Radix) Find(key string) *Radix {
 	// look up the child starting with the same letter as key
 	child, ok := r.children[key[0]]
@@ -240,17 +188,6 @@ func (r *Radix) Do(f func(interface{})) {
 	}
 }
 
-// Prefix returns the string that is the result of "subtracting" r.Key from s. 
-// If s equals "tester" and the key were r is stored is "ster", Prefix returns
-// "te".
-func (r *Radix) Prefix(s string) string {
-	l := strings.LastIndex(s, r.Key())
-	if l == -1 {
-		return ""
-	}
-	return s[:l]
-}
-
 // Len computes the number of nodes in the radix tree r.
 func (r *Radix) Len() int {
 	i := 0
@@ -263,6 +200,24 @@ func (r *Radix) Len() int {
 		}
 	}
 	return i
+}
+
+// Keys return all the keys from the node r and downwards
+func (r *Radix) Keys() (s []string) {
+	// get the full key for this node and use that to get all the other keys
+	fullkey := r.key
+	for p := r.parent; p != nil; p = p.parent {
+		fullkey = p.key + fullkey
+	}
+	return r.keys(fullkey)
+}
+
+func (r *Radix) keys(fullkey string) (s []string) {
+	s = append(s, fullkey)
+	for _, c := range r.children {
+		s = append(s, c.keys(fullkey+c.key)...)
+	}
+	return s
 }
 
 // New returns an initialized radix tree.
