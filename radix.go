@@ -131,7 +131,6 @@ func (r *Radix) Find(key string) *Radix {
 	if child.key != commonPrefix {
 		return nil
 	}
-	// TODO(mg): if U
 
 	// find the key left of key in child
 	return child.Find(key[prefixEnd:])
@@ -139,6 +138,21 @@ func (r *Radix) Find(key string) *Radix {
 
 // Prefix returns a slice with all the keys that share this prefix.
 func (r *Radix) Prefix(prefix string) []string {
+	bestfit := r.prefix(prefix)
+	return bestfit.Keys()
+}
+
+func (r *Radix) prefix(prefix string) *Radix {
+	child, ok := r.children[prefix[0]]
+	if !ok {
+		return nil
+	}
+	if prefix == child.key {
+		return child
+	}
+	_, prefixEnd := longestCommonPrefix(prefix, child.key)
+	println("prefixend", prefixEnd, prefix, child.key)
+	return child.prefix(prefix[prefixEnd:])
 }
 
 // Remove removes any value set to key. It returns the removed node or nil if the

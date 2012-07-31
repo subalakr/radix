@@ -119,3 +119,12 @@ func BenchmarkFind(b *testing.B) {
 	}
 }
 
+func TestPrefix(t *testing.T) {
+	r := New()
+	r.Insert("tester", nil)
+	r.Insert("testering", nil)
+	r.Insert("te", nil)
+	r.Insert("testeringandmore", nil)
+	prexs := r.Prefix("t")
+	t.Logf("%+v\n", prexs)
+}
