@@ -127,4 +127,13 @@ func TestPrefix(t *testing.T) {
 	r.Insert("testeringandmore", nil)
 	prexs := r.Prefix("t")
 	t.Logf("%+v\n", prexs)
+
+	prexs = r.Prefix("te")
+	t.Logf("%+v\n", prexs)
+
+	prexs = r.Prefix("test")
+	t.Logf("%+v\n", prexs)
+
+	prexs = r.Prefix("t1")
+	t.Logf("%+v\n", prexs)
 }
