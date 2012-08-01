@@ -155,12 +155,12 @@ func (r *Radix) prefix(prefix string) *Radix {
 
 // Next returns the next node in a lexical ordering.
 func (r *Radix) Next() *Radix {
-	if r.parent == nil { // not worky for root
+	if r.parent == nil { // No worky for root
 		return nil
 	}
 	switch len(r.children) {
 	case 0:
-		// look at my neigherbors
+		// look at my neighbors
 		me := r.key[0]
 		// No sorting of maps, so we do it like this
 		var next byte
@@ -172,7 +172,7 @@ func (r *Radix) Next() *Radix {
 			}
 		}
 		// We have found one
-		if r.parent.children[next].Value != nil {
+		if last != 256 && r.parent.children[next].Value != nil {
 			return r.parent.children[next]
 		}
 	case 1:
@@ -192,11 +192,12 @@ func (r *Radix) Next() *Radix {
 				last = int(i)
 			}
 		}
-		if r.parent.children[left].Value != nil {
+		if last != 256 && r.parent.children[left].Value != nil {
 			return r.parent.children[left]
 		}
 
 	}
+	// nothing found below me and nothing found next to me
 	return nil
 }
 

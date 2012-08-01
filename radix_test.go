@@ -47,8 +47,11 @@ func TestNext(t *testing.T) {
 	printit(r, 0)
 	println("Find team")
 	f := r.Find("team")
-	l := f.Next()
-	println(l.Key())
+	for l := f.Next(); l != nil; l = l.Next() {
+		println(l.String())
+		println(l.Key())
+
+	}
 }
 
 func TestInsert(t *testing.T) {
