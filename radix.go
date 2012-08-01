@@ -6,20 +6,12 @@
 //    October 1968                                                                                  
 //
 // Also see http://en.wikipedia.org/wiki/Radix_tree for more information.
-// This package implements an unsorted radix tree, however successor and predecessor
-// functions are available.
 //
-// Basic use pattern for iterating over a radix tree:
-//
-//	func iter(r *Radix) {
-//		// Current key is r.Key()
-//		for _, child := range r.Children() {
-//			iter(child)
-//		}
-//	}
-//
-//	iter(r.Find("tester"))		// Iterate from "tester" down
 package radix
+
+import (
+	"fmt"
+)
 
 // Radix represents a radix tree.
 // The key of the root node of a tree is always empty.
@@ -33,20 +25,20 @@ type Radix struct {
 	Value interface{}
 }
 
+func (r *Radix) String() string {
+	s := fmt.Sprintf("%p: %s -> `%v'\n ", r, r.key, r.Value)
+	for i, _ := range r.children {
+		s += string(i)
+	}
+	return s
+}
+
 // Key returns the full key under which r is stored.
 func (r *Radix) Key() (s string) {
 	for p := r; p != nil; p = p.parent {
 		s = p.key + s
 	}
 	return
-}
-
-// Children returns the children of r or nil if there are none.
-func (r *Radix) Children() map[byte]*Radix {
-	if r != nil {
-		return r.children
-	}
-	return nil
 }
 
 func longestCommonPrefix(key, bar string) (string, int) {
@@ -86,7 +78,7 @@ func (r *Radix) Insert(key string, value interface{}) *Radix {
 	}
 
 	// create new child node to replace current child
-	newChild := &Radix{make(map[byte]*Radix), commonPrefix, nil, nil}
+	newChild := &Radix{make(map[byte]*Radix), commonPrefix, r, nil}
 
 	// replace child of current node with new child: map first letter of common prefix to new child
 	r.children[commonPrefix[0]] = newChild
@@ -159,6 +151,53 @@ func (r *Radix) prefix(prefix string) *Radix {
 		return child
 	}
 	return child.prefix(prefix[prefixEnd:])
+}
+
+// Next returns the next node in a lexical ordering.
+func (r *Radix) Next() *Radix {
+	if r.parent == nil { // not worky for root
+		return nil
+	}
+	switch len(r.children) {
+	case 0:
+		// look at my neigherbors
+		me := r.key[0]
+		// No sorting of maps, so we do it like this
+		var next byte
+		var last int = 256
+		for i, _ := range r.parent.children {
+			if i > me && int(i) < last {
+				next = i
+				last = int(i)
+			}
+		}
+		// We have found one
+		if r.parent.children[next].Value != nil {
+			return r.parent.children[next]
+		}
+	case 1:
+		// one child, that is the one
+		for _, c := range r.children {
+			if c.Value != nil {
+				return c
+			}
+		}
+	default:
+		// sort the children and get the most left one
+		var left byte
+		var last int = 256
+		for i, _ := range r.children {
+			if i > left && int(i) < last {
+				left = i
+				last = int(i)
+			}
+		}
+		if r.parent.children[left].Value != nil {
+			return r.parent.children[left]
+		}
+
+	}
+	return nil
 }
 
 // Remove removes any value set to key. It returns the removed node or nil if the
