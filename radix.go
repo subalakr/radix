@@ -223,14 +223,6 @@ func (r *Radix) Len() int {
 	return i
 }
 
-func (r *Radix) Successor(s string) string {
-	return ""
-}
-
-func (r *Radix) Predecessor(s string) string {
-	return ""
-}
-
 // CommonPrefix returns a slice with all the keys that share the prefix.
 func (r *Radix) CommonPrefix(prefix string) []string {
 	child, ok := r.children[prefix[0]]
