@@ -154,7 +154,8 @@ func (r *Radix) prefix(prefix string) *Radix {
 }
 
 // Next returns the next node in a lexical ordering.
-func (r *Radix) Next() *Radix {
+// TODO(mg): This function does not work
+func (r *Radix) next() *Radix {
 	if r.parent == nil { // No worky for root
 		return nil
 	}
