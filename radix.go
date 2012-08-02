@@ -108,7 +108,6 @@ func (r *Radix) Find(key string) *Radix {
 		return nil
 	}
 
-	// check if the end of our string is found and return
 	if key == child.key {
 		return child
 	}
@@ -268,39 +267,6 @@ func (r *Radix) Len() int {
 	return i
 }
 
-<<<<<<< HEAD
-// CommonPrefix returns a slice with all the keys that share the prefix.
-func (r *Radix) CommonPrefix(prefix string) []string {
-	child, ok := r.children[prefix[0]]
-	if !ok {
-		return nil
-	}
-
-	if prefix == child.key {
-		// parent pointer to get the full key
-		return child.Keys()
-	}
-
-	commonPrefix, prefixEnd := longestCommonPrefix(prefix, child.key)
-
-	if child.key != commonPrefix {
-		return nil
-	}
-	return child.CommonPrefix(prefix[prefixEnd:])
-}
-
-// Keys returns all the keys from the node r downwards
-func (r *Radix) Keys() (s []string) {
-	return r.keys("")
-}
-
-func (r *Radix) keys(prefix string) (s []string) {
-	if r.key != "" { // root key is empty
-		s = append(s, prefix+r.key)
-	}
-	for _, child := range r.children {
-		s = append(s, child.keys(prefix+r.key)...)
-=======
 // Keys return all the keys from the node r and downwards
 func (r *Radix) Keys() (s []string) {
 	// get the full key for this node and use that to get all the other keys
@@ -315,7 +281,6 @@ func (r *Radix) keys(fullkey string) (s []string) {
 	s = append(s, fullkey)
 	for _, c := range r.children {
 		s = append(s, c.keys(fullkey+c.key)...)
->>>>>>> cow
 	}
 	return s
 }

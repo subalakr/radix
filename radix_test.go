@@ -37,6 +37,23 @@ func validate(r *Radix) bool {
 	return true
 }
 
+func TestPrint(t *testing.T) {
+	r := radixtree()
+	printit(r, 0)
+}
+
+func TestNext(t *testing.T) {
+	r := radixtree()
+	printit(r, 0)
+	println("Find team")
+	f := r.Find("team")
+	for l := f.Next(); l != nil; l = l.Next() {
+		println(l.String())
+		println(l.Key())
+
+	}
+}
+
 func TestInsert(t *testing.T) {
 	r := New()
 	if !validate(r) {
@@ -98,18 +115,11 @@ func ExampleFind() {
 	// prefix testeringandmore
 }
 
-<<<<<<< HEAD
-func TestKeys(t *testing.T) {
-	r := radixtree()
-	printit(r, 0)
-	fmt.Printf("%+v\n", r.Keys()
-=======
 func iter(r *Radix) {
 	fmt.Printf("prefix %s\n", r.Key())
 	for _, child := range r.children {
 		iter(child)
 	}
->>>>>>> cow
 }
 
 func BenchmarkFind(b *testing.B) {
