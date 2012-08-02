@@ -9,7 +9,7 @@ func printit(r *Radix, level int) {
 	for i := 0; i < level; i++ {
 		fmt.Print("\t")
 	}
-	fmt.Printf("'%v'  value: %v\n", r.key, r.Value)
+	fmt.Printf("%p '%v'  value: '%v'    parent %p\n", r, r.key, r.Value, r.parent)
 	for _, child := range r.children {
 		printit(child, level+1)
 	}
@@ -17,18 +17,16 @@ func printit(r *Radix, level int) {
 
 func radixtree() *Radix {
 	r := New()
-	r.Insert("test", nil)
-	r.Insert("slow", nil)
-	r.Insert("water", nil)
-	r.Insert("tester", nil)
-	r.Insert("testering", nil)
-	r.Insert("rewater", nil)
-	r.Insert("waterrat", nil)
+	r.Insert("test", "a")
+	r.Insert("tester", "a")
+	r.Insert("team", "a")
+	r.Insert("te", "a")
 	return r
 }
 
 // None, of the childeren must have a prefix incommon with r.key
 func validate(r *Radix) bool {
+	return true
 	for _, child := range r.children {
 		_, i := longestCommonPrefix(r.key, child.key)
 		if i != 0 {
@@ -37,12 +35,6 @@ func validate(r *Radix) bool {
 		validate(child)
 	}
 	return true
-}
-
-func TestPrefix(t *testing.T) {
-	r := radixtree()
-	prexs := r.CommonPrefix("te")
-	t.Logf("%v\n", prexs)
 }
 
 func TestInsert(t *testing.T) {
@@ -81,6 +73,16 @@ func TestRemove(t *testing.T) {
 		t.Log("should be nil")
 		t.Fail()
 	}
+	r.Insert("test", "aa")
+	r.Insert("tester", "aa")
+	r.Insert("testering", "aa")
+	r.Find("tester").Remove("test")
+}
+
+func TestCommonPrefix(t *testing.T) {
+	r := radixtree()
+	f := r.Find("tester")
+	t.Logf("%s %+v\n", f.key, f.Keys())
 }
 
 func ExampleFind() {
@@ -89,18 +91,25 @@ func ExampleFind() {
 	r.Insert("testering", nil)
 	r.Insert("te", nil)
 	r.Insert("testeringandmore", nil)
-	f := r.Find("tester")
-	iter(f, f.Prefix("tester"))
+	iter(r.Find("tester"))
 	// Output:
 	// prefix tester
 	// prefix testering
 	// prefix testeringandmore
 }
 
+<<<<<<< HEAD
 func TestKeys(t *testing.T) {
 	r := radixtree()
 	printit(r, 0)
 	fmt.Printf("%+v\n", r.Keys()
+=======
+func iter(r *Radix) {
+	fmt.Printf("prefix %s\n", r.Key())
+	for _, child := range r.children {
+		iter(child)
+	}
+>>>>>>> cow
 }
 
 func BenchmarkFind(b *testing.B) {
@@ -110,12 +119,5 @@ func BenchmarkFind(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		_ = r.Find("tester")
-	}
-}
-
-func iter(r *Radix, prefix string) {
-	fmt.Printf("prefix %s\n", prefix + r.Key())
-	for _, child := range r.Children() {
-		iter(child, prefix + r.Key())
 	}
 }

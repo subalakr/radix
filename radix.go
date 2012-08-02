@@ -7,49 +7,38 @@
 //
 // Also see http://en.wikipedia.org/wiki/Radix_tree for more information.
 //
-// Basic use pattern for iterating over a radix tree and retrieving the full
-// keys under which nodes are stored:
-//
-//	func iter(r *Radix, prefix string) {
-//		// Current key is r.Key()
-//		// The full key would be prefix + r.Key()
-//		for _, child := range r.Children() {
-//			iter(child, prefix + r.Key()
-//		}
-//	}
-//
-//	f := r.Find("tester")		// Look for "tester"
-//	iter(f, f.Prefix("tester"))	// Get all the keys from "tester" down
 package radix
 
 import (
-	"strings"
+	"fmt"
 )
 
 // Radix represents a radix tree.
+// The key of the root node of a tree is always empty.
 type Radix struct {
-	// children maps the first letter of each child to the child itself, e.g. "a" -> "ab", "x" -> "xyz", "y" -> "yza", ...
+	// children maps the first letter of each child to the child.
 	children map[byte]*Radix
 	key      string
+	parent   *Radix // a pointer back to the parent
 
 	// The contents of the radix node.
 	Value interface{}
 }
 
-// Key returns the (partial) key under which r is stored.
-func (r *Radix) Key() string {
-	if r != nil {
-		return r.key
+func (r *Radix) String() string {
+	s := fmt.Sprintf("%p: %s -> `%v'\n ", r, r.key, r.Value)
+	for i, _ := range r.children {
+		s += string(i)
 	}
-	return ""
+	return s
 }
 
-// Children returns the children of r or nil if there are none.
-func (r *Radix) Children() map[byte]*Radix {
-	if r != nil {
-		return r.children
+// Key returns the full (from r down to this node) key under which r is stored.
+func (r *Radix) Key() (s string) {
+	for p := r; p != nil; p = p.parent {
+		s = p.key + s
 	}
-	return nil
+	return
 }
 
 func longestCommonPrefix(key, bar string) (string, int) {
@@ -67,34 +56,29 @@ func longestCommonPrefix(key, bar string) (string, int) {
 }
 
 // Insert inserts the value into the tree with the specified key. It returns the radix node
-// it just inserted.
+// it just inserted. Insert must be called on the root of the tree.
 func (r *Radix) Insert(key string, value interface{}) *Radix {
 	// look up the child starting with the same letter as key
 	// if there is no child with the same starting letter, insert a new one
 	child, ok := r.children[key[0]]
 	if !ok {
-		r.children[key[0]] = &Radix{make(map[byte]*Radix), key, value}
+		r.children[key[0]] = &Radix{make(map[byte]*Radix), key, r, value}
 		return r.children[key[0]]
 	}
 
-	// if key == child.key, don't have to create a new child, but only have to set the (maybe new) value
 	if key == child.key {
 		child.Value = value
 		return child
 	}
 
-	// commonPrefix is now the longest common substring of key and child.key [e.g. only "ab" from "abab" is contained in "abba"]
 	commonPrefix, prefixEnd := longestCommonPrefix(key, child.key)
 
-	// insert key not shared if commonPrefix == child.key [e.g. child is "ab", key is "abc". we only want to insert "c" below "ab"]
 	if commonPrefix == child.key {
 		return child.Insert(key[prefixEnd:], value)
 	}
 
-	// if current child is "abc" and key is "abx", we need to create a new child "ab" with two sub children "c" and "x"
-
 	// create new child node to replace current child
-	newChild := &Radix{make(map[byte]*Radix), commonPrefix, nil}
+	newChild := &Radix{make(map[byte]*Radix), commonPrefix, r, nil}
 
 	// replace child of current node with new child: map first letter of common prefix to new child
 	r.children[commonPrefix[0]] = newChild
@@ -104,22 +88,21 @@ func (r *Radix) Insert(key string, value interface{}) *Radix {
 
 	// map old child's new first letter to old child as a child of the new child
 	newChild.children[child.key[0]] = child
+	child.parent = newChild // update the pointer of the current child which is moved down
 
 	// if there are key left of key, insert them into our new child
 	if key != newChild.key {
-		// insert key left of key into new child [insert "abba" into "abab" -> "ab" with "ab" as child. now go into node "ab" and create child node "ba"]
 		newChild.Insert(key[prefixEnd:], value)
-		// else, set new.Child.Value to the value to insert and return
 	} else {
 		newChild.Value = value
 	}
 	return newChild
 }
 
-// Find returns the node associated with key. All children of this node share the same prefix
+// Find returns the node associated with key. All childeren of this node share the same prefix,
+// r does not have to be the root of the radix tree, but it starts be looking at the children
+// of the current node.
 func (r *Radix) Find(key string) *Radix {
-	// look up the child starting with the same letter as key
-	// if there is no child with the same starting letter, return false
 	child, ok := r.children[key[0]]
 	if !ok {
 		return nil
@@ -130,7 +113,6 @@ func (r *Radix) Find(key string) *Radix {
 		return child
 	}
 
-	// commonPrefix is now the longest common substring of key and child.key [e.g. only "ab" from "abab" is contained in "abba"]
 	commonPrefix, prefixEnd := longestCommonPrefix(key, child.key)
 
 	// if child.key is not completely contained in key, abort [e.g. trying to find "ab" in "abc"]
@@ -142,11 +124,87 @@ func (r *Radix) Find(key string) *Radix {
 	return child.Find(key[prefixEnd:])
 }
 
+// Prefix returns a slice with all the keys that share this prefix. Prefix
+// needs to start from the root node.
+func (r *Radix) Prefix(prefix string) []string {
+	bestfit := r.prefix(prefix)
+	if bestfit == nil {
+		return nil
+	}
+	return bestfit.Keys()
+}
+
+func (r *Radix) prefix(prefix string) *Radix {
+	if r.key == prefix {
+		return r
+	}
+
+	child, ok := r.children[prefix[0]]
+	if !ok {
+		return nil
+	}
+	if prefix == child.key {
+		return child
+	}
+	// The whole of the prefix is contained in the child's key
+	_, prefixEnd := longestCommonPrefix(prefix, child.key)
+	if prefixEnd+1 > len(prefix) {
+		return child
+	}
+	return child.prefix(prefix[prefixEnd:])
+}
+
+// Next returns the next node in a lexical ordering.
+func (r *Radix) Next() *Radix {
+	if r.parent == nil { // No worky for root
+		return nil
+	}
+	switch len(r.children) {
+	case 0:
+		// look at my neighbors
+		me := r.key[0]
+		// No sorting of maps, so we do it like this
+		var next byte
+		var last int = 256
+		for i, _ := range r.parent.children {
+			if i > me && int(i) < last {
+				next = i
+				last = int(i)
+			}
+		}
+		// We have found one
+		if last != 256 && r.parent.children[next].Value != nil {
+			return r.parent.children[next]
+		}
+	case 1:
+		// one child, that is the one
+		for _, c := range r.children {
+			if c.Value != nil {
+				return c
+			}
+		}
+	default:
+		// sort the children and get the most left one
+		var left byte
+		var last int = 256
+		for i, _ := range r.children {
+			if i > left && int(i) < last {
+				left = i
+				last = int(i)
+			}
+		}
+		if last != 256 && r.parent.children[left].Value != nil {
+			return r.parent.children[left]
+		}
+
+	}
+	// nothing found below me and nothing found next to me
+	return nil
+}
+
 // Remove removes any value set to key. It returns the removed node or nil if the
 // node cannot be found.
 func (r *Radix) Remove(key string) *Radix {
-	// look up the child starting with the same letter as key
-	// if there is no child with the same starting letter, return
 	child, ok := r.children[key[0]]
 	if !ok {
 		return nil
@@ -165,6 +223,7 @@ func (r *Radix) Remove(key string) *Radix {
 				child.key = child.key + subchild.key
 				child.Value = subchild.Value
 				child.children = subchild.children
+				child.parent = r
 			}
 		default:
 			// if there are >= 2 subchilds, we can only set the value to nil, thus delete any value set to key
@@ -173,16 +232,13 @@ func (r *Radix) Remove(key string) *Radix {
 		return child
 	}
 
-	// key != child.keys
+	// Node has not been foundJ, key != child.keys
 
-	// commonPrefix is now the longest common substring of key and child.key [e.g. only "ab" from "abab" is contained in "abba"]
 	commonPrefix, prefixEnd := longestCommonPrefix(key, child.key)
-
 	// if child.key is not completely contained in key, abort [e.g. trying to delete "ab" from "abc"]
 	if child.key != commonPrefix {
 		return nil
 	}
-
 	// else: cut off common prefix and delete left string in child
 	return child.Remove(key[prefixEnd:])
 }
@@ -196,17 +252,6 @@ func (r *Radix) Do(f func(interface{})) {
 			child.Do(f)
 		}
 	}
-}
-
-// Prefix returns the string that is the result of "subtracting" r.Key from s. 
-// If s equals "tester" and the key were r is stored is "ster", Prefix returns
-// "te".
-func (r *Radix) Prefix(s string) string {
-	l := strings.LastIndex(s, r.Key())
-	if l == -1 {
-		return ""
-	}
-	return s[:l]
 }
 
 // Len computes the number of nodes in the radix tree r.
@@ -223,6 +268,7 @@ func (r *Radix) Len() int {
 	return i
 }
 
+<<<<<<< HEAD
 // CommonPrefix returns a slice with all the keys that share the prefix.
 func (r *Radix) CommonPrefix(prefix string) []string {
 	child, ok := r.children[prefix[0]]
@@ -254,11 +300,27 @@ func (r *Radix) keys(prefix string) (s []string) {
 	}
 	for _, child := range r.children {
 		s = append(s, child.keys(prefix+r.key)...)
+=======
+// Keys return all the keys from the node r and downwards
+func (r *Radix) Keys() (s []string) {
+	// get the full key for this node and use that to get all the other keys
+	fullkey := r.key
+	for p := r.parent; p != nil; p = p.parent {
+		fullkey = p.key + fullkey
+	}
+	return r.keys(fullkey)
+}
+
+func (r *Radix) keys(fullkey string) (s []string) {
+	s = append(s, fullkey)
+	for _, c := range r.children {
+		s = append(s, c.keys(fullkey+c.key)...)
+>>>>>>> cow
 	}
 	return s
 }
 
 // New returns an initialized radix tree.
 func New() *Radix {
-	return &Radix{make(map[byte]*Radix), "", nil}
+	return &Radix{make(map[byte]*Radix), "", nil, nil}
 }
