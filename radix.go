@@ -33,7 +33,7 @@ func (r *Radix) String() string {
 	return s
 }
 
-// Key returns the full key under which r is stored.
+// Key returns the full (from r down to this node) key under which r is stored.
 func (r *Radix) Key() (s string) {
 	for p := r; p != nil; p = p.parent {
 		s = p.key + s
