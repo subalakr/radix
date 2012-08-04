@@ -39,9 +39,11 @@ func validate(r *Radix) bool {
 
 func TestPredecessor(t *testing.T) {
 	r := radixtree()
+	r.Insert("teak", "a")
+	printit(r, 0)
 	// team is below te, so we should find 'te'
-	if r.Predecessor("team").Key() != "te" {
-		t.Fatal("Failed to find predecessor of team")
+	if x := r.Predecessor("team").Key(); x != "te" {
+		t.Fatalf("Failed to find predecessor of team, found %s", x)
 	}
 	// tester is there, so we look for testeraaa
 	if r.Predecessor("testeraaa").Key() != "tester" {
@@ -54,6 +56,8 @@ func TestPredecessor(t *testing.T) {
 	if r.Predecessor("atester").Key() != "" {
 		t.Fatal("Found predecessor of atester which should be there")
 	}
+	// this should find nothing, or at least stop at the root node
+	println("Key:", r.Predecessor("er").Key())
 }
 
 func TestPrint(t *testing.T) {

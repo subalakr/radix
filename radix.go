@@ -127,13 +127,18 @@ func (r *Radix) Find(key string) *Radix {
 // Predecessor returns the node who's key is the largest, but always smaller than the given key.
 // If nothing is found the root node is returned.
 func (r *Radix) Predecessor(key string) *Radix {
-	// TODO(mg): check above documentation
 	child, ok := r.children[key[0]]
 	if !ok {
 		return r
 	}
 	// Ok, we found the node...
 	if key == child.key {
+		if r.Value != nil {
+			return r
+		}
+		for r.Value == nil {
+			r = r.parent
+		}
 		return r
 	}
 
@@ -141,7 +146,13 @@ func (r *Radix) Predecessor(key string) *Radix {
 
 	// if child.key is not completely contained in key, return the parent
 	if child.key != commonPrefix {
-		return r.parent
+		if r.parent.Value != nil {
+			return r
+		}
+		for r.parent.Value == nil {
+			r = r.parent
+		}
+		return r
 	}
 	// find the key left of key in child
 	return child.Predecessor(key[prefixEnd:])
