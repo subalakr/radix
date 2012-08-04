@@ -137,6 +137,9 @@ func (r *Radix) Predecessor(key string) *Radix {
 			return r
 		}
 		for r.Value == nil {
+			if r.parent == nil {
+				break
+			}
 			r = r.parent
 		}
 		return r
