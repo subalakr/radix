@@ -123,6 +123,32 @@ func (r *Radix) Find(key string) *Radix {
 	return child.Find(key[prefixEnd:])
 }
 
+// Find predecessor: Locates the largest string less than a given string, by lexicographic order.
+// Predecessor returns the node who's key is the largest, but always smaller than the given key.
+// If nothing is found the root node is returned.
+func (r *Radix) Predecessor(key string) *Radix {
+	// TODO(mg): check above documentation
+	child, ok := r.children[key[0]]
+	if !ok {
+		return r
+	}
+	// Ok, we found the node...
+	if key == child.key {
+		return r
+	}
+
+	commonPrefix, prefixEnd := longestCommonPrefix(key, child.key)
+
+	// if child.key is not completely contained in key, return the parent
+	if child.key != commonPrefix {
+		return r.parent
+	}
+	// find the key left of key in child
+	return child.Predecessor(key[prefixEnd:])
+}
+
+// Find successor: Locates the smallest string greater than a given string, by
+
 // Prefix returns a slice with all the keys that share this prefix. Prefix
 // needs to start from the root node.
 func (r *Radix) Prefix(prefix string) []string {

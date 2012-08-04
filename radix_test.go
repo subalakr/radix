@@ -37,6 +37,25 @@ func validate(r *Radix) bool {
 	return true
 }
 
+func TestPredecessor(t *testing.T) {
+	r := radixtree()
+	// team is below te, so we should find 'te'
+	if r.Predecessor("team").Key() != "te" {
+		t.Fatal("Failed to find predecessor of team")
+	}
+	// tester is there, so we look for testeraaa
+	if r.Predecessor("testeraaa").Key() != "tester" {
+		t.Fatal("Failed to find predecessor of testeraaa")
+	}
+	if r.Predecessor("testeraaahsahsjahsj").Key() != "tester" {
+		t.Fatal("Failed to find predecessor of testeraaa...")
+	}
+	// this should find nothing, or at least stop at the root node
+	if r.Predecessor("atester").Key() != "" {
+		t.Fatal("Found predecessor of atester which should be there")
+	}
+}
+
 func TestPrint(t *testing.T) {
 	// TODO(mg): fix
 }
@@ -92,10 +111,19 @@ func TestRemove(t *testing.T) {
 	r.Find("tester").Remove("test")
 }
 
-func TestCommonPrefix(t *testing.T) {
+func TestKeys(t *testing.T) {
 	r := radixtree()
-	f := r.Find("tester")
-	t.Logf("%s %+v\n", f.key, f.Keys())
+	i := 0
+	for _, k := range r.Keys() {
+		if k == "" { i++ }
+		if k == "te" { i++ }
+		if k == "team" { i++ }
+		if k == "test" { i++ }
+		if k == "tester" { i++ }
+	}
+	if i != 5 {
+		t.Fatal("not all keys seen")
+	}
 }
 
 func ExampleFind() {
