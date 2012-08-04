@@ -125,7 +125,7 @@ func (r *Radix) Find(key string) *Radix {
 
 // Find predecessor: Locates the largest string less than a given string, by lexicographic order.
 // Predecessor returns the node who's key is the largest, but always smaller than the given key.
-// If nothing is found the root node is returned.
+// If nothing is found nil is returned.
 func (r *Radix) Predecessor(key string) *Radix {
 	child, ok := r.children[key[0]]
 	if !ok {
@@ -138,6 +138,7 @@ func (r *Radix) Predecessor(key string) *Radix {
 		}
 		for r.Value == nil {
 			if r.parent == nil {
+				r = r.parent
 				break
 			}
 			r = r.parent
