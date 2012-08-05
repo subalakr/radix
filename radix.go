@@ -202,10 +202,9 @@ func (r *Radix) Up() *Radix {
 	if r.parent == nil {
 		return nil
 	}
-	for r = r.parent; r.Value == nil; r = r.parent {
-		if r == nil {
-			return nil
-		}
+	// Walk until you can walk nomore
+	for r = r.parent; r != nil && r.Value == nil; r = r.parent {
+		// ...
 	}
 	return r
 }
