@@ -43,34 +43,27 @@ func TestPredecessor(t *testing.T) {
 	printit(r, 0)
 	// team is below te, so we should find 'te'
 	if x := r.Predecessor("team").Key(); x != "te" {
-		t.Fatalf("Failed to find predecessor of team, found %s", x)
+		t.Logf("Failed to find predecessor of team, found %s", x)
+		t.Fail()
 	}
 	// tester is there, so we look for testeraaa
 	if r.Predecessor("testeraaa").Key() != "tester" {
-		t.Fatal("Failed to find predecessor of testeraaa")
+		t.Logf("Failed to find predecessor of testeraaa")
+		t.Fail()
 	}
 	if r.Predecessor("testeraaahsahsjahsj").Key() != "tester" {
-		t.Fatal("Failed to find predecessor of testeraaa...")
+		t.Logf("Failed to find predecessor of testeraaa...")
+		t.Fail()
 	}
 	// this should find nothing, or at least stop at the root node
 	if r.Predecessor("atester").Key() != "" {
-		t.Fatal("Found predecessor of atester which should be there")
+		t.Logf("Found predecessor of atester which shouldn't be there")
+		t.Fail()
 	}
-	// this should find nothing, or at least stop at the root node
-	println("Key:", r.Predecessor("er").Key())
 }
 
 func TestPrint(t *testing.T) {
 	// TODO(mg): fix
-}
-
-func TestNext(t *testing.T) {
-	r := radixtree()
-	f := r.Find("team")
-	for l := f.next(); l != nil; l = l.next() {
-//		println(l.String())
-//		println(l.Key())
-	}
 }
 
 func TestInsert(t *testing.T) {
