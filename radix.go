@@ -129,38 +129,18 @@ func (r *Radix) Find(key string) *Radix {
 func (r *Radix) Predecessor(key string) *Radix {
 	child, ok := r.children[key[0]]
 	if !ok {
-		return r
+		return r.Up()
 	}
-	// Ok, we found the node...
+	// Ok, we found the node... 
 	if key == child.key {
-		if r.Value != nil {
-			return r
-		}
-		for r.Value == nil {
-			if r.parent == nil {
-				r = r.parent
-				break
-			}
-			r = r.parent
-		}
-		return r
+		return r.Up()
 	}
 
 	commonPrefix, prefixEnd := longestCommonPrefix(key, child.key)
 
 	// if child.key is not completely contained in key, return the parent
 	if child.key != commonPrefix {
-		if r.Value != nil {
-			return r
-		}
-		for r.Value == nil {
-			if r.parent == nil {
-				r = r.parent
-				break
-			}
-			r = r.parent
-		}
-		return r
+		return r.Up()
 	}
 	// find the key left of key in child
 	return child.Predecessor(key[prefixEnd:])
@@ -198,53 +178,16 @@ func (r *Radix) prefix(prefix string) *Radix {
 	return child.prefix(prefix[prefixEnd:])
 }
 
-// Next returns the next node in a lexical ordering.
-// TODO(mg): This function does not work
-func (r *Radix) next() *Radix {
-	if r.parent == nil { // No worky for root
-		return nil
+// Up returns the first node above r which has a non-nil Value.
+// If nothing is found nil is returned.
+func (r *Radix) Up() *Radix {
+	for r.Value == nil {
+		if r.parent == nil {
+			return nil // Root node
+		}
+		r = r.parent
 	}
-	switch len(r.children) {
-	case 0:
-		// look at my neighbors
-		me := r.key[0]
-		// No sorting of maps, so we do it like this
-		var next byte
-		var last int = 256
-		for i, _ := range r.parent.children {
-			if i > me && int(i) < last {
-				next = i
-				last = int(i)
-			}
-		}
-		// We have found one
-		if last != 256 && r.parent.children[next].Value != nil {
-			return r.parent.children[next]
-		}
-	case 1:
-		// one child, that is the one
-		for _, c := range r.children {
-			if c.Value != nil {
-				return c
-			}
-		}
-	default:
-		// sort the children and get the most left one
-		var left byte
-		var last int = 256
-		for i, _ := range r.children {
-			if i > left && int(i) < last {
-				left = i
-				last = int(i)
-			}
-		}
-		if last != 256 && r.parent.children[left].Value != nil {
-			return r.parent.children[left]
-		}
-
-	}
-	// nothing found below me and nothing found next to me
-	return nil
+	return r
 }
 
 // Remove removes any value set to key. It returns the removed node or nil if the
