@@ -150,10 +150,14 @@ func (r *Radix) Predecessor(key string) *Radix {
 
 	// if child.key is not completely contained in key, return the parent
 	if child.key != commonPrefix {
-		if r.parent.Value != nil {
+		if r.Value != nil {
 			return r
 		}
-		for r.parent.Value == nil {
+		for r.Value == nil {
+			if r.parent == nil {
+				r = r.parent
+				break
+			}
 			r = r.parent
 		}
 		return r
