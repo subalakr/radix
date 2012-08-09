@@ -103,6 +103,9 @@ func (r *Radix) Insert(key string, value interface{}) *Radix {
 // r does not have to be the root of the radix tree, but it starts be looking at the children
 // of the current node.
 func (r *Radix) Find(key string) *Radix {
+	if key == "" {
+		return nil
+	}
 	child, ok := r.children[key[0]]
 	if !ok {
 		return nil
