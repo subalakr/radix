@@ -286,7 +286,9 @@ func (r *Radix) Keys() (s []string) {
 }
 
 func (r *Radix) keys(fullkey string) (s []string) {
-	s = append(s, fullkey)
+	if fullkey != "" { // root
+		s = append(s, fullkey)
+	}
 	for _, c := range r.children {
 		s = append(s, c.keys(fullkey+c.key)...)
 	}
