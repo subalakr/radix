@@ -152,3 +152,10 @@ func BenchmarkFind(b *testing.B) {
 		_ = r.Find("tester")
 	}
 }
+
+func TestCow(t *testing.T) {
+	r := New()
+	r.Insert("test", "a")
+	r.Insert("team", "a")
+	printit(r, 0)
+}
