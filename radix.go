@@ -27,8 +27,9 @@ type Radix struct {
 
 func (r *Radix) String() string {
 	s := fmt.Sprintf("%p: %s -> `%v'\n ", r, r.key, r.Value)
-	for i, _ := range r.children {
-		s += string(i)
+	for i, r1 := range r.children {
+		s += string(i) + ","
+		s += r1.String()
 	}
 	return s
 }
