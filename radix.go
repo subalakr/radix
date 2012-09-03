@@ -30,7 +30,7 @@ func (r *Radix) String() string {
 }
 
 func (r *Radix) stringHelper(indent string) string {
-	s := fmt.Sprintf("%s%p -> `%s': ", indent, r, r.key)
+	s := fmt.Sprintf("%s%p -> `%s' (`%s`): ", indent, r, r.key, r.Key())
 	for i, _ := range r.children {
 		s += string(i)
 	}
