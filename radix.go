@@ -30,14 +30,11 @@ func (r *Radix) String() string {
 }
 
 func (r *Radix) stringHelper(indent string) (s string) {
+	value := "<non nil>"
 	if r.Value == nil {
-		for i, r1 := range r.children {
-			s += indent + string(i) + ":" + r1.stringHelper("  "+indent)
-		}
-		return s
-
+		value = "<nil>"
 	}
-	s = fmt.Sprintf("%s%p -> `%s' (`%s`): ", indent, r, r.key, r.Key())
+	s = fmt.Sprintf("%s%p -> `%s' (`%s`) %s: ", indent, r, r.key, r.Key(), value)
 	for i, _ := range r.children {
 		s += string(i)
 	}
