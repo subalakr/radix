@@ -29,14 +29,21 @@ func (r *Radix) String() string {
 	return r.stringHelper("")
 }
 
-func (r *Radix) stringHelper(indent string) string {
-	s := fmt.Sprintf("%s%p -> `%s' (`%s`): ", indent, r, r.key, r.Key())
+func (r *Radix) stringHelper(indent string) (s string) {
+	if r.Value == nil {
+		for i, r1 := range r.children {
+			s += indent + string(i) + ":" + r1.stringHelper("  "+indent)
+		}
+		return s
+
+	}
+	s = fmt.Sprintf("%s%p -> `%s' (`%s`): ", indent, r, r.key, r.Key())
 	for i, _ := range r.children {
 		s += string(i)
 	}
 	s += "\n"
 	for i, r1 := range r.children {
-		s += indent + string(i) + ":" + r1.stringHelper("  " + indent)
+		s += indent + string(i) + ":" + r1.stringHelper("  "+indent)
 	}
 	return s
 }
