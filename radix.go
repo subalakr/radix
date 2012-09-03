@@ -26,10 +26,17 @@ type Radix struct {
 }
 
 func (r *Radix) String() string {
-	s := fmt.Sprintf("%p: %s -> `%v'\n ", r, r.key, r.Value)
+	return r.stringHelper("")
+}
+
+func (r *Radix) stringHelper(indent string) string {
+	s := fmt.Sprintf("%s%p -> `%s': ", indent, r, r.key)
+	for i, _ := range r.children {
+		s += string(i)
+	}
+	s += "\n"
 	for i, r1 := range r.children {
-		s += string(i) + ","
-		s += r1.String()
+		s += indent + string(i) + ":" + r1.stringHelper("  " + indent)
 	}
 	return s
 }
