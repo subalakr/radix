@@ -9,10 +9,6 @@
 //
 package radix
 
-import (
-	"fmt"
-)
-
 // Radix represents a radix tree.
 // The key of the root node of a tree is always empty.
 type Radix struct {
@@ -30,11 +26,10 @@ func (r *Radix) String() string {
 }
 
 func (r *Radix) stringHelper(indent string) (s string) {
-	value := "<non nil>"
+	s = indent + r.Key() + ":"
 	if r.Value == nil {
-		value = "<nil>"
+		s = indent + "<nil>:"
 	}
-	s = fmt.Sprintf("%s%p -> `%s' (`%s`) %s: ", indent, r, r.key, r.Key(), value)
 	for i, _ := range r.children {
 		s += string(i)
 	}
