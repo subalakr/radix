@@ -9,6 +9,40 @@
 //
 package radix
 
+func longestCommonPrefix(key, bar string) (string, int) {
+	if key == "" || bar == "" {
+		return "", 0
+	}
+	x := 0
+	for key[x] == bar[x] {
+		x = x + 1
+		if x == len(key) || x == len(bar) {
+			break
+		}
+	}
+	return key[:x], x // == bar[:x]
+}
+
+// smallestSuccessor walks the keys of the map and returns the smallest
+// successor for key and true. Or if key is the largest key, it will return
+// false, the value of successor isn't specified in that case.
+// We need this function because a map isn't sorted and for the Next() function
+// we *do* need to sort this.
+func smallestSuccessor(m map[byte]*Radix, key byte) (successor byte, found bool) {
+	guard := 256
+	for k, _ := range m {
+		if k > key && int(k) < guard {
+			guard = int(k)
+			successor = k
+			found = true
+		}
+	}
+	return
+}
+
+// TODO
+// func largestPredecessor
+
 // Radix represents a radix tree.
 // The key of the root node of a tree is always empty.
 type Radix struct {
@@ -46,20 +80,6 @@ func (r *Radix) Key() (s string) {
 		s = p.key + s
 	}
 	return
-}
-
-func longestCommonPrefix(key, bar string) (string, int) {
-	if key == "" || bar == "" {
-		return "", 0
-	}
-	x := 0
-	for key[x] == bar[x] {
-		x = x + 1
-		if x == len(key) || x == len(bar) {
-			break
-		}
-	}
-	return key[:x], x // == bar[:x]
 }
 
 // Insert inserts the value into the tree with the specified key. It returns the radix node

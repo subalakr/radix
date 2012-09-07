@@ -37,6 +37,27 @@ func validate(r *Radix) bool {
 	return true
 }
 
+func TestSuccessor(t *testing.T) {
+	a := make(map[byte]*Radix)
+	// fake fill it, this is randomized by Go
+	a['a'] = nil
+	a['b'] = nil
+	a['c'] = nil
+	a['d'] = nil
+	a['e'] = nil
+	a['f'] = nil
+	s, f := smallestSuccessor(a, 'f')
+	if f {
+		t.Logf("Should be false")
+		t.Fail()
+	}
+	s, f = smallestSuccessor(a, 'b')
+	if s != 'c' {
+		t.Logf("Should be c (%s)!", string(s))
+		t.Fail()
+	}
+}
+
 func TestPredecessor(t *testing.T) {
 	r := radixtree()
 	r.Insert("teak", "a")
