@@ -231,7 +231,9 @@ func (r *Radix) Next() *Radix {
 }
 
 // next goes up in the tree to look for nodes with a neighbor.
-// if found that neighbor is the next. It finishes at root.
+// if found that neighbor is returned. If a parent has no neighbor
+// its parent is tried. This finishes at root, at which point nil 
+// is returned.
 func (r *Radix) next() *Radix {
 	if r.parent == nil {
 		return nil
