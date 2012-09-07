@@ -53,6 +53,30 @@ func leftMostChild(m map[byte]*Radix) (left byte) {
 	return
 }
 
+// largestPredecessor is the opposite of smallestSuccessor
+func largestPredecessor(m map[byte]*Radix, key byte) (pred byte, found bool) {
+	guard := -1
+	for k, _ := range m {
+		if k < key && int(k) > guard {
+			guard = int(k)
+			pred = k
+			found = true
+		}
+	}
+	return
+}
+
+// rightMostChild returns the largest child of the current node.
+func rightMostChild(m map[byte]*Radix) (right byte) {
+	right = 0
+	for k, _ := range m {
+		if k > right {
+			right = k
+		}
+	}
+	return
+}
+
 // Radix represents a radix tree.
 type Radix struct {
 	// children maps the first letter of each child to the child.
