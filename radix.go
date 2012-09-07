@@ -154,6 +154,47 @@ func (r *Radix) Find(key string) (node *Radix, exact bool) {
 	return child.Find(key[prefixEnd:])
 }
 
+// Find predecessor: Locates the largest string less than a given string, by lexicographic order.
+// Predecessor returns the node who's key is the largest, but always smaller than the given key.
+// If nothing is found nil is returned.
+func (r *Radix) Predecessor(key string) *Radix {
+	child, ok := r.children[key[0]]
+	if !ok {
+		for r.Value == nil {
+			if r.parent == nil {
+				return nil // Root node
+			}
+			r = r.parent
+		}
+		return r
+	}
+	// Ok, we found the node... 
+	if key == child.key {
+		for r.Value == nil {
+			if r.parent == nil {
+				return nil // Root node
+			}
+			r = r.parent
+		}
+		return r
+	}
+
+	commonPrefix, prefixEnd := longestCommonPrefix(key, child.key)
+
+	// if child.key is not completely contained in key, return the parent
+	if child.key != commonPrefix {
+		for r.Value == nil {
+			if r.parent == nil {
+				return nil // Root node
+			}
+			r = r.parent
+		}
+		return r
+	}
+	// find the key left of key in child
+	return child.Predecessor(key[prefixEnd:])
+}
+
 // Up returns the first node above r which has a non-nil Value.
 // If nothing is found nil is returned.
 func (r *Radix) Up() *Radix {
