@@ -130,18 +130,23 @@ func TestNext(t *testing.T) {
 	r.Insert("nl.miek.c", "xx")
 	r.Insert("nl.miek.d", "xx")
 	r.Insert("nl.miek.c.a", "xx")
-	r.Insert("nl.miek.c.a", "xx")
+	r.Insert("nl.miek.c.c", "xx")
 	next := map[string]string{"nl.miek": "nl.miek.a",
 		"nl.miek.a":   "nl.miek.c",
-		"nl.miek.a.c": "nl.miek.c.c",
+		"nl.miek.c.a": "nl.miek.c.c",
 		"nl.miek.c.c": "nl.miek.d",
 	}
 	for x, nxt := range next {
 		r1, _ := r.Find(x)
 		if n := r1.Next(); n.Key() != nxt {
-			t.Logf("Must be %s, is %s\n", nxt, n.Key())
+			t.Logf("Next of %s must be %s, is %s\n", x, nxt, n.Key())
 			t.Fail()
 		}
+	}
+	r1, _ := r.Find("nl.miek.d")
+	if r1.Next() != nil {
+		t.Logf("Failed to find apex")
+		t.Fail()
 	}
 }
 
