@@ -58,37 +58,6 @@ func TestSuccessor(t *testing.T) {
 	}
 }
 
-/*
-func TestPredecessor(t *testing.T) {
-	r := radixtree()
-	r.Insert("teak", "a")
-	printit(r, 0)
-	// team is below te, so we should find 'te'
-	if x := r.Predecessor("team").Key(); x != "te" {
-		t.Logf("Failed to find predecessor of team, found %s", x)
-		t.Fail()
-	}
-	// tester is there, so we look for testeraaa
-	if r.Predecessor("testeraaa").Key() != "tester" {
-		t.Logf("Failed to find predecessor of testeraaa")
-		t.Fail()
-	}
-	if r.Predecessor("testeraaahsahsjahsj").Key() != "tester" {
-		t.Logf("Failed to find predecessor of testeraaa...")
-		t.Fail()
-	}
-	// this should find nothing, or at least stop at the root node
-	if r.Predecessor("atester").Key() != "" {
-		t.Logf("Found predecessor of atester which shouldn't be there")
-		t.Fail()
-	}
-}
-*/
-
-func TestPrint(t *testing.T) {
-	// TODO(mg): fix
-}
-
 func TestInsert(t *testing.T) {
 	r := New()
 	if !validate(r) {
@@ -128,7 +97,7 @@ func TestRemove(t *testing.T) {
 	r.Insert("test", "aa")
 	r.Insert("tester", "aa")
 	r.Insert("testering", "aa")
-//	r.Find("tester").Remove("test")
+	//	r.Find("tester").Remove("test")
 }
 
 // Not an example function, because ordering isn't specified in maps
@@ -136,13 +105,43 @@ func TestKeys(t *testing.T) {
 	r := radixtree()
 	i := 0
 	for _, k := range r.Keys() {
-		if k == "te" { i++ }
-		if k == "team" { i++ }
-		if k == "test" { i++ }
-		if k == "tester" { i++ }
+		if k == "te" {
+			i++
+		}
+		if k == "team" {
+			i++
+		}
+		if k == "test" {
+			i++
+		}
+		if k == "tester" {
+			i++
+		}
 	}
 	if i != 4 {
 		t.Fatal("not all keys seen")
+	}
+}
+
+func TestNext(t *testing.T) {
+	r := New()
+	r.Insert("nl.miek", "xx")
+	r.Insert("nl.miek.a", "xx")
+	r.Insert("nl.miek.c", "xx")
+	r.Insert("nl.miek.d", "xx")
+	r.Insert("nl.miek.c.a", "xx")
+	r.Insert("nl.miek.c.a", "xx")
+	next := map[string]string{"nl.miek": "nl.miek.a",
+		"nl.miek.a":   "nl.miek.c",
+		"nl.miek.a.c": "nl.miek.c.c",
+		"nl.miek.c.c": "nl.miek.d",
+	}
+	for x, nxt := range next {
+		r1, _ := r.Find(x)
+		if n := r1.Next(); n.Key() != nxt {
+			t.Logf("Must be %s, is %s\n", nxt, n.Key())
+			t.Fail()
+		}
 	}
 }
 

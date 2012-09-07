@@ -91,6 +91,18 @@ func (r *Radix) Key() (s string) {
 	return
 }
 
+// Up returns the first node above r which has a non-nil Value.
+// It terminates at the root and returns nil if that happens.
+func (r *Radix) Up() *Radix {
+       if r.parent == nil {
+               return nil
+       }
+       for r = r.parent; r != nil && r.Value == nil; r = r.parent {
+               // ...
+       }
+       return r
+}
+
 // Insert inserts the value into the tree with the specified key. It returns the radix node
 // it just inserted, r must the root of the radix tree.
 func (r *Radix) Insert(key string, value interface{}) *Radix {
@@ -163,49 +175,6 @@ func (r *Radix) Find(key string) (node *Radix, exact bool) {
 	return child.Find(key[prefixEnd:])
 }
 
-// TODO: I think this can be done with Find now...
-
-// Find predecessor: Locates the largest string less than a given string, by lexicographic order.
-// Predecessor returns the node who's key is the largest, but always smaller than the given key.
-// If nothing is found nil is returned.
-func (r *Radix) Predecessor(key string) *Radix {
-	child, ok := r.children[key[0]]
-	if !ok {
-		for r.Value == nil {
-			if r.parent == nil {
-				return nil // Root node
-			}
-			r = r.parent
-		}
-		return r
-	}
-	// Ok, we found the node... 
-	if key == child.key {
-		for r.Value == nil {
-			if r.parent == nil {
-				return nil // Root node
-			}
-			r = r.parent
-		}
-		return r
-	}
-
-	commonPrefix, prefixEnd := longestCommonPrefix(key, child.key)
-
-	// if child.key is not completely contained in key, return the parent
-	if child.key != commonPrefix {
-		for r.Value == nil {
-			if r.parent == nil {
-				return nil // Root node
-			}
-			r = r.parent
-		}
-		return r
-	}
-	// find the key left of key in child
-	return child.Predecessor(key[prefixEnd:])
-}
-
 // Next returns the next node in the tree. For non-leaf nodes this is the left most
 // child node. For leaf nodes this is the first neighbor to the right. If no such
 // neighbor is found, it's the first existing neighbor of a parent. This finally
@@ -237,7 +206,7 @@ func (r *Radix) Next() *Radix {
 	panic("dns: not reached")
 }
 
-// next goes up in the tree, to look for nodes with a neighbor.
+// next goes up in the tree to look for nodes with a neighbor.
 // if found that neighbor is the next. It finishes at root.
 func (r *Radix) next() *Radix {
 	if r.parent == nil {
@@ -252,19 +221,6 @@ func (r *Radix) next() *Radix {
 		return ret
 	}
 	return r.parent.next()
-}
-
-// Up returns the first node above r which has a non-nil Value.
-// If nothing is found nil is returned.
-func (r *Radix) Up() *Radix {
-	if r.parent == nil {
-		return nil
-	}
-	// Walk until you can walk nomore
-	for r = r.parent; r != nil && r.Value == nil; r = r.parent {
-		// ...
-	}
-	return r
 }
 
 // Remove removes any value set to key. It returns the removed node or nil if the
@@ -308,7 +264,7 @@ func (r *Radix) Remove(key string) *Radix {
 	return child.Remove(key[prefixEnd:])
 }
 
-// Do calls function f on each node in the tree. f's parameter will be r.Value. The behavior of Do is              
+// Do calls function f on each node with Value != nil in the tree. f's parameter will be r.Value. The behavior of Do is              
 // undefined if f changes r.                                                       
 func (r *Radix) Do(f func(interface{})) {
 	if r != nil {
