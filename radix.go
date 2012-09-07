@@ -118,13 +118,13 @@ func (r *Radix) Key() (s string) {
 // Up returns the first node above r which has a non-nil Value.
 // It terminates at the root and returns nil if that happens.
 func (r *Radix) Up() *Radix {
-       if r.parent == nil {
-               return nil
-       }
-       for r = r.parent; r != nil && r.Value == nil; r = r.parent {
-               // ...
-       }
-       return r
+	if r.parent == nil {
+		return nil
+	}
+	for r = r.parent; r != nil && r.Value == nil; r = r.parent {
+		// ...
+	}
+	return r
 }
 
 // Insert inserts the value into the tree with the specified key. It returns the radix node
