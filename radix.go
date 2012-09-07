@@ -40,6 +40,17 @@ func smallestSuccessor(m map[byte]*Radix, key byte) (successor byte, found bool)
 	return
 }
 
+// LeftMostChild returns the smallest child of the current node
+func leftMostChild(m map[byte]*Radix) (left byte) {
+	left = 255
+	for k, _ := range m {
+		if k < left {
+			left = k
+		}
+	}
+	return
+}
+
 // TODO
 // func largestPredecessor
 
@@ -60,7 +71,7 @@ func (r *Radix) String() string {
 }
 
 func (r *Radix) stringHelper(indent string) (s string) {
-	s = indent + r.Key() + ":"
+	s = indent + r.Key() + " '" + r.key + "'" + ":"
 	if r.Value == nil {
 		s = indent + "<nil>:"
 	}
@@ -193,6 +204,54 @@ func (r *Radix) Predecessor(key string) *Radix {
 	}
 	// find the key left of key in child
 	return child.Predecessor(key[prefixEnd:])
+}
+
+// Next returns the next node in the tree. For non-leaf nodes this is the left most
+// child node. For leaf nodes this is the first neighbor to the right. If no such
+// neighbor is found, it's the first existing neighbor of a parent. This finally
+// terminates the root of the tree. Next does not return nodes with Value == nil,
+// so the caller is guaranteed to get a node with data.
+func (r *Radix) Next() *Radix {
+	switch len(r.children) {
+	case 0: // leaf-node, 
+		// Look in my parent to get a list of my peers
+		// r.parent is never nil?
+		neighbor, found := smallestSuccessor(r.parent.children, r.key[0])
+		if found {
+			ret := r.parent.children[neighbor]
+			for ret.Value == nil {
+				ret = ret.children[leftMostChild(ret.children)]
+			}
+			return ret
+		}
+		// There are no neighbors left, loop up
+		return r.next()
+	default: // non-leaf node
+		// Skip <nil> value nodes, because those have no data
+		ret := r.children[leftMostChild(r.children)]
+		for ret.Value == nil {
+			ret = ret.children[leftMostChild(ret.children)]
+		}
+		return ret
+	}
+	panic("dns: not reached")
+}
+
+// next goes up in the tree, to look for nodes with a neighbor.
+// if found that neighbor is the next. It finishes at root.
+func (r *Radix) next() *Radix {
+	if r.parent == nil {
+		return nil
+	}
+	neighbor, found := smallestSuccessor(r.parent.children, r.key[0])
+	if found {
+		ret := r.parent.children[neighbor]
+		if ret.Value == nil {
+			ret = ret.children[leftMostChild(ret.children)]
+		}
+		return ret
+	}
+	return r.parent.next()
 }
 
 // Up returns the first node above r which has a non-nil Value.
