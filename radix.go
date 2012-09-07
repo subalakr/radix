@@ -126,104 +126,32 @@ func (r *Radix) Insert(key string, value interface{}) *Radix {
 	return newChild
 }
 
-// Find returns the node associated with key. All childeren of this node share the same prefix,
-// r does not have to be the root of the radix tree, but it starts be looking at the children
-// of the current node.
-func (r *Radix) Find(key string) *Radix {
+// Find returns the node associated with key,
+// r must be the root of the Radix tree, although this is not enforced. If the node is located
+// it is returned and exact is set to true. If the node is not found, the immediate predecessor
+// is returned and exact is set to false.
+func (r *Radix) Find(key string) (node *Radix, exact bool) {
 	if key == "" {
-		return nil
+		return nil, false
 	}
 	child, ok := r.children[key[0]]
 	if !ok {
-		return nil
+		return r, false
 	}
 
 	if key == child.key {
-		return child
+		return child, true
 	}
 
 	commonPrefix, prefixEnd := longestCommonPrefix(key, child.key)
 
 	// if child.key is not completely contained in key, abort [e.g. trying to find "ab" in "abc"]
 	if child.key != commonPrefix {
-		return nil
+		return r, false
 	}
 
 	// find the key left of key in child
 	return child.Find(key[prefixEnd:])
-}
-
-// Find predecessor: Locates the largest string less than a given string, by lexicographic order.
-// Predecessor returns the node who's key is the largest, but always smaller than the given key.
-// If nothing is found nil is returned.
-func (r *Radix) Predecessor(key string) *Radix {
-	child, ok := r.children[key[0]]
-	if !ok {
-		for r.Value == nil {
-			if r.parent == nil {
-				return nil // Root node
-			}
-			r = r.parent
-		}
-		return r
-	}
-	// Ok, we found the node... 
-	if key == child.key {
-		for r.Value == nil {
-			if r.parent == nil {
-				return nil // Root node
-			}
-			r = r.parent
-		}
-		return r
-	}
-
-	commonPrefix, prefixEnd := longestCommonPrefix(key, child.key)
-
-	// if child.key is not completely contained in key, return the parent
-	if child.key != commonPrefix {
-		for r.Value == nil {
-			if r.parent == nil {
-				return nil // Root node
-			}
-			r = r.parent
-		}
-		return r
-	}
-	// find the key left of key in child
-	return child.Predecessor(key[prefixEnd:])
-}
-
-// Find successor: Locates the smallest string greater than a given string, by
-
-// Prefix returns a slice with all the keys that share this prefix. Prefix
-// needs to start from the root node.
-func (r *Radix) Prefix(prefix string) []string {
-	bestfit := r.prefix(prefix)
-	if bestfit == nil {
-		return nil
-	}
-	return bestfit.Keys()
-}
-
-func (r *Radix) prefix(prefix string) *Radix {
-	if r.key == prefix {
-		return r
-	}
-
-	child, ok := r.children[prefix[0]]
-	if !ok {
-		return nil
-	}
-	if prefix == child.key {
-		return child
-	}
-	// The whole of the prefix is contained in the child's key
-	_, prefixEnd := longestCommonPrefix(prefix, child.key)
-	if prefixEnd+1 > len(prefix) {
-		return child
-	}
-	return child.prefix(prefix[prefixEnd:])
 }
 
 // Up returns the first node above r which has a non-nil Value.
