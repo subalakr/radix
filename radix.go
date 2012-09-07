@@ -177,7 +177,7 @@ func (r *Radix) Insert(key string, value interface{}) *Radix {
 // r must be the root of the Radix tree, although this is not enforced. If the node is located
 // it is returned and exact is set to true. If the node is not found, the immediate predecessor
 // is returned and exact is set to false. Is it up to the caller to call Up to get a real
-// value.
+// value. Note that find can return nodes where Value is nil.
 func (r *Radix) Find(key string) (node *Radix, exact bool) {
 	if key == "" {
 		return nil, false
@@ -205,7 +205,7 @@ func (r *Radix) Find(key string) (node *Radix, exact bool) {
 // Next returns the next node in the tree. For non-leaf nodes this is the left most
 // child node. For leaf nodes this is the first neighbor to the right. If no such
 // neighbor is found, it's the first existing neighbor of a parent. This finally
-// terminates the root of the tree. Next does not return nodes with Value == nil,
+// terminates the root of the tree. Next does not return nodes with Value is nil,
 // so the caller is guaranteed to get a node with data, unless we hit the root node.
 func (r *Radix) Next() *Radix {
 	switch len(r.children) {
