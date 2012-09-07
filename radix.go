@@ -171,10 +171,13 @@ func (r *Radix) Insert(key string, value interface{}) *Radix {
 	return newChild
 }
 
+// TODO(mg): find always returns non-nil value
+
 // Find returns the node associated with key,
 // r must be the root of the Radix tree, although this is not enforced. If the node is located
-// it is returned and exact is set to true. If the node is not found, the first predecessor
-// with Value != nil is returned and exact is set to false.
+// it is returned and exact is set to true. If the node is not found, the immediate predecessor
+// is returned and exact is set to false. Is it up to the caller to call Up to get a real
+// value.
 func (r *Radix) Find(key string) (node *Radix, exact bool) {
 	if key == "" {
 		return nil, false
@@ -185,22 +188,14 @@ func (r *Radix) Find(key string) (node *Radix, exact bool) {
 	}
 
 	if key == child.key {
-		ret := child
-		for ret.Value == nil {
-			ret = ret.parent
-		}
-		return ret, true
+		return child, true
 	}
 
 	commonPrefix, prefixEnd := longestCommonPrefix(key, child.key)
 
 	// if child.key is not completely contained in key, abort [e.g. trying to find "ab" in "abc"]
 	if child.key != commonPrefix {
-		ret := r
-		for ret.Value == nil {
-			ret = ret.parent
-		}
-		return ret, false
+		return r, false
 	}
 
 	// find the key left of key in child
@@ -211,7 +206,7 @@ func (r *Radix) Find(key string) (node *Radix, exact bool) {
 // child node. For leaf nodes this is the first neighbor to the right. If no such
 // neighbor is found, it's the first existing neighbor of a parent. This finally
 // terminates the root of the tree. Next does not return nodes with Value == nil,
-// so the caller is guaranteed to get a node with data.
+// so the caller is guaranteed to get a node with data, unless we hit the root node.
 func (r *Radix) Next() *Radix {
 	switch len(r.children) {
 	case 0: // leaf-node, 
