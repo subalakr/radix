@@ -9,6 +9,8 @@
 //
 package radix
 
+// longestCommonPrefix returns the longest prefiex key and bar have
+// in common.
 func longestCommonPrefix(key, bar string) (string, int) {
 	if key == "" || bar == "" {
 		return "", 0
@@ -40,7 +42,7 @@ func smallestSuccessor(m map[byte]*Radix, key byte) (successor byte, found bool)
 	return
 }
 
-// LeftMostChild returns the smallest child of the current node
+// leftMostChild returns the smallest child of the current node.
 func leftMostChild(m map[byte]*Radix) (left byte) {
 	left = 255
 	for k, _ := range m {
@@ -51,11 +53,7 @@ func leftMostChild(m map[byte]*Radix) (left byte) {
 	return
 }
 
-// TODO
-// func largestPredecessor
-
 // Radix represents a radix tree.
-// The key of the root node of a tree is always empty.
 type Radix struct {
 	// children maps the first letter of each child to the child.
 	children map[byte]*Radix
@@ -94,7 +92,7 @@ func (r *Radix) Key() (s string) {
 }
 
 // Insert inserts the value into the tree with the specified key. It returns the radix node
-// it just inserted. Insert must be called on the root of the tree.
+// it just inserted, r must the root of the radix tree.
 func (r *Radix) Insert(key string, value interface{}) *Radix {
 	// look up the child starting with the same letter as key
 	// if there is no child with the same starting letter, insert a new one
@@ -126,7 +124,7 @@ func (r *Radix) Insert(key string, value interface{}) *Radix {
 
 	// map old child's new first letter to old child as a child of the new child
 	newChild.children[child.key[0]] = child
-	child.parent = newChild // update the pointer of the current child which is moved down
+	child.parent = newChild
 
 	// if there are key left of key, insert them into our new child
 	if key != newChild.key {
@@ -164,6 +162,8 @@ func (r *Radix) Find(key string) (node *Radix, exact bool) {
 	// find the key left of key in child
 	return child.Find(key[prefixEnd:])
 }
+
+// TODO: I think this can be done with Find now...
 
 // Find predecessor: Locates the largest string less than a given string, by lexicographic order.
 // Predecessor returns the node who's key is the largest, but always smaller than the given key.
