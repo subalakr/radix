@@ -88,6 +88,11 @@ type Radix struct {
 	Value interface{}
 }
 
+// New returns an initialized radix tree.
+func New() *Radix {
+	return &Radix{make(map[byte]*Radix), "", nil, nil}
+}
+
 func (r *Radix) String() string {
 	return r.stringHelper("")
 }
@@ -171,13 +176,11 @@ func (r *Radix) Insert(key string, value interface{}) *Radix {
 	return newChild
 }
 
-// TODO(mg): find always returns non-nil value
-
 // Find returns the node associated with key,
 // r must be the root of the Radix tree, although this is not enforced. If the node is located
 // it is returned and exact is set to true. If the node is not found, the immediate predecessor
 // is returned and exact is set to false. Is it up to the caller to call Up to get a real
-// value. Note that find can return nodes where Value is nil.
+// value. Note that find does return nodes where Value is nil.
 func (r *Radix) Find(key string) (node *Radix, exact bool) {
 	if key == "" {
 		return nil, false
@@ -336,9 +339,4 @@ func (r *Radix) keys(fullkey string) (s []string) {
 		s = append(s, c.keys(fullkey+c.key)...)
 	}
 	return s
-}
-
-// New returns an initialized radix tree.
-func New() *Radix {
-	return &Radix{make(map[byte]*Radix), "", nil, nil}
 }
