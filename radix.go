@@ -255,6 +255,48 @@ func (r *Radix) next() *Radix {
 	return r.parent.next()
 }
 
+// Predecessor returns the node who's key is the largest, but always smaller than t
+// If nothing is found nil is returned. If Predecessor returns a node, its
+// value will be non-nil.
+func (r *Radix) Predecessor(key string) *Radix {
+       child, ok := r.children[key[0]]
+       if !ok {
+               for r.Value == nil {
+                       if r.parent == nil {
+                               return nil // Root node
+                       }
+                       r = r.parent
+               }
+               return r
+       }
+       // Ok, we found the node... 
+       if key == child.key {
+               for r.Value == nil {
+                       if r.parent == nil {
+                               return nil // Root node
+                       }
+                       r = r.parent
+               }
+               return r
+       }
+
+       commonPrefix, prefixEnd := longestCommonPrefix(key, child.key)
+
+       // if child.key is not completely contained in key, return the parent
+       if child.key != commonPrefix {
+               for r.Value == nil {
+                       if r.parent == nil {
+                               return nil // Root node
+                       }
+                       r = r.parent
+               }
+               return r
+       }
+       // find the key left of key in child
+       return child.Predecessor(key[prefixEnd:])
+}
+
+
 // Remove removes any value set to key. It returns the removed node or nil if the
 // node cannot be found.
 func (r *Radix) Remove(key string) *Radix {
