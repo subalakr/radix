@@ -53,7 +53,7 @@ func leftMostChild(m map[byte]*Radix) (left byte) {
 	return
 }
 
-// largestPredecessor is the opposite of smallestSuccessor
+// largestPredecessor is the opposite of smallestSuccessor.
 func largestPredecessor(m map[byte]*Radix, key byte) (pred byte, found bool) {
 	guard := -1
 	for k, _ := range m {
@@ -338,7 +338,7 @@ func (r *Radix) Remove(key string) *Radix {
 	return child.Remove(key[prefixEnd:])
 }
 
-// Do calls function f on each node with Value != nil in the tree. f's parameter will be r.Value. The behavior of Do is              
+// Do calls function f on each node with Value is not nil in the tree. f's parameter will be r.Value. The behavior of Do is              
 // undefined if f changes r.                                                       
 func (r *Radix) Do(f func(interface{})) {
 	if r != nil {
@@ -361,24 +361,4 @@ func (r *Radix) Len() int {
 		}
 	}
 	return i
-}
-
-// Keys return all the keys from the node r and downwards
-func (r *Radix) Keys() (s []string) {
-	// get the full key for this node and use that to get all the other keys
-	fullkey := r.key
-	for p := r.parent; p != nil; p = p.parent {
-		fullkey = p.key + fullkey
-	}
-	return r.keys(fullkey)
-}
-
-func (r *Radix) keys(fullkey string) (s []string) {
-	if fullkey != "" { // root
-		s = append(s, fullkey)
-	}
-	for _, c := range r.children {
-		s = append(s, c.keys(fullkey+c.key)...)
-	}
-	return s
 }

@@ -100,29 +100,6 @@ func TestRemove(t *testing.T) {
 	//	r.Find("tester").Remove("test")
 }
 
-// Not an example function, because ordering isn't specified in maps
-func TestKeys(t *testing.T) {
-	r := radixtree()
-	i := 0
-	for _, k := range r.Keys() {
-		if k == "te" {
-			i++
-		}
-		if k == "team" {
-			i++
-		}
-		if k == "test" {
-			i++
-		}
-		if k == "tester" {
-			i++
-		}
-	}
-	if i != 4 {
-		t.Fatal("not all keys seen")
-	}
-}
-
 func TestNext(t *testing.T) {
 	r := New()
 	r.Insert("nl.miek", "xx")
