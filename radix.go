@@ -255,7 +255,7 @@ func (r *Radix) next() *Radix {
 	return r.parent.next()
 }
 
-// Predecessor returns the node who's key is the largest, but always smaller than t
+// Predecessor returns the node who's key is the largest, but always smaller than key.
 // If nothing is found nil is returned. If Predecessor returns a node, its
 // value will be non-nil.
 func (r *Radix) Predecessor(key string) *Radix {
