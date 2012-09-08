@@ -255,14 +255,11 @@ func (r *Radix) next() *Radix {
 	return r.parent.next()
 }
 
-// Successor returns the node who's keys is the smallest, but always larger than key.
-// If nothing is found nil is returned. If Seccessor returns a node, its
-// value will be non-nil.
-// Which child to choose??
+// Successor locates the smallest string greater than a given string, by lexicographic order.
+// If nothing is found nil is returned. If a node is returned, its value will be non-nil.
 
-// Predecessor returns the node who's key is the largest, but always smaller than key.
-// If nothing is found nil is returned. If Predecessor returns a node, its
-// value will be non-nil.
+// Predecessor locates the largest string less than a given string key, by lexicographic order.
+// If nothing is found nil is returned. If a node is returned, its value will be non-nil.
 func (r *Radix) Predecessor(key string) *Radix {
 	// We look for the node and then return the first parent with
 	// value != nil
