@@ -12,12 +12,12 @@ Or the [wikipedia article](http://en.wikipedia.org/wiki/Radix_tree).
 
 Get the package:
 
-	$ go get github.com/sauerbraten/radix
+	$ go get github.com/miekg/radix
 
 Import the package:
 
 	import (
-		"github.com/sauerbraten/radix"
+		"github.com/miekg/radix"
 	)
 
 You can use the tree as a key-value structure, where every node's can have its
@@ -26,11 +26,14 @@ look up strings, like so:
 
 	r := radix.New()
 	r.Insert("foo", true)
-	fmt.Printf("foo is contained: %v\n", r.Find("foo").Value)
+        x, e := r.Find("foo")
+        if e {
+	    fmt.Printf("foo is contained: %v\n", x.Value)
+        }
 
 ### Documentation
 
-For full package documentation, visit http://go.pkgdoc.org/github.com/sauerbraten/radix.
+For full package documentation, visit http://go.pkgdoc.org/github.com/miekg/radix.
 
 ## License
 
