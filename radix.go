@@ -258,6 +258,7 @@ func (r *Radix) next() *Radix {
 // Successor locates the smallest string greater than a given string, by lexicographic order.
 // If nothing is found nil is returned. If a node is returned, its value will be non-nil.
 
+// This is Find + Up
 // Predecessor locates the largest string less than a given string key, by lexicographic order.
 // If nothing is found nil is returned. If a node is returned, its value will be non-nil.
 func (r *Radix) Predecessor(key string) *Radix {
