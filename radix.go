@@ -178,26 +178,56 @@ func (r *Radix) Insert(key string, value interface{}) *Radix {
 
 // Find returns the node associated with key,
 // r must be the root of the Radix tree, although this is not enforced. If the node is located
-// it is returned and exact is set to true. If the node is not found, the immediate predecessor
-// is returned and exact is set to false. Is it up to the caller to call Up to get a real
-// value. Note that find does return nodes where Value is nil.
+// it is returned and exact is set to true. If the node found has a nil Value, Find will go
+// up in the tree to look for a non-nil Value. If this happens exact is set to false.
+// If the node is not found, the immediate predecessor
+// is returned and exact is set to false. If this node also has a nil Value the same thing
+// happens: the tree is search upwards, until the first non-nil Value node is found. 
 func (r *Radix) Find(key string) (node *Radix, exact bool) {
 	if key == "" {
 		return nil, false
 	}
 	child, ok := r.children[key[0]]
 	if !ok {
+		if r.Value != nil {
+			return r, false
+		}
+		for r.Value == nil {
+			if r.parent == nil {
+				return nil, false // Root
+			}
+			r = r.parent
+		}
 		return r, false
 	}
 
 	if key == child.key {
-		return child, true
+		if child.Value != nil {
+			return child, true
+		}
+		r := child
+		for r.Value == nil  {
+			if r.parent == nil {
+				return nil, false // Root
+			}
+			r = r.parent
+		}
+		return r, false
 	}
 
 	commonPrefix, prefixEnd := longestCommonPrefix(key, child.key)
 
 	// if child.key is not completely contained in key, abort [e.g. trying to find "ab" in "abc"]
 	if child.key != commonPrefix {
+		if r.Value != nil {
+			return r, false
+		}
+		for r.Value == nil {
+			if r.parent == nil {
+				return nil, false
+			}
+			r = r.parent
+		}
 		return r, false
 	}
 
@@ -255,52 +285,10 @@ func (r *Radix) next() *Radix {
 	return r.parent.next()
 }
 
-// Successor locates the smallest string greater than a given string, by lexicographic order.
-// If nothing is found nil is returned. If a node is returned, its value will be non-nil.
-
-// This is Find + Up
-// Predecessor locates the largest string less than a given string key, by lexicographic order.
-// If nothing is found nil is returned. If a node is returned, its value will be non-nil.
-func (r *Radix) Predecessor(key string) *Radix {
-	// We look for the node and then return the first parent with
-	// value != nil
-       child, ok := r.children[key[0]]
-       if !ok {
-               for r.Value == nil {
-                       if r.parent == nil {
-                               return nil // Root node
-                       }
-                       r = r.parent
-               }
-               return r
-       }
-       // Ok, we found the node... 
-       if key == child.key {
-               for r.Value == nil {
-                       if r.parent == nil {
-                               return nil // Root node
-                       }
-                       r = r.parent
-               }
-               return r
-       }
-
-       commonPrefix, prefixEnd := longestCommonPrefix(key, child.key)
-
-       // if child.key is not completely contained in key, return the parent
-       if child.key != commonPrefix {
-               for r.Value == nil {
-                       if r.parent == nil {
-                               return nil // Root node
-                       }
-                       r = r.parent
-               }
-               return r
-       }
-       // find the key left of key in child
-       return child.Predecessor(key[prefixEnd:])
+// Prev is the opposite of Next. Prev returns the previous node in the tree.
+func (r *Radix) Prev() *Radix {
+	return nil
 }
-
 
 // Remove removes any value set to key. It returns the removed node or nil if the
 // node cannot be found.
@@ -343,11 +331,13 @@ func (r *Radix) Remove(key string) *Radix {
 	return child.Remove(key[prefixEnd:])
 }
 
-// Do calls function f on each node with Value is not nil in the tree. f's parameter will be r.Value. The behavior of Do is              
+// Do calls function f on each node with Value is non-nil in the tree. f's parameter will be r.Value. The behavior of Do is              
 // undefined if f changes r.                                                       
 func (r *Radix) Do(f func(interface{})) {
 	if r != nil {
-		f(r.Value)
+		if r.Value != nil {
+			f(r.Value)
+		}
 		for _, child := range r.children {
 			child.Do(f)
 		}
