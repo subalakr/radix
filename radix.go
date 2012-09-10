@@ -237,11 +237,15 @@ func (r *Radix) Find(key string) (node *Radix, exact bool) {
 
 // FindFunc works just like Find, but each non-nill Value of each node traversed during
 // the search is given to the function f. Is this function returns true, that node is returned
-// and the search stops.
+// and the search stops, exact is set to false and funcfound to true.
 func (r *Radix) FindFunc(key string, f func(interface{}) bool) (node *Radix, exact bool, funcfound bool) {
 	if key == "" {
 		return nil, false, false
 	}
+	if r.Value != nil && f(r.Value) {
+		return r, false, true
+	}
+
 	child, ok := r.children[key[0]]
 	if !ok {
 		if r.Value != nil {
