@@ -108,10 +108,12 @@ func TestNext(t *testing.T) {
 	r.Insert("nl.miek.d", "xx")
 	r.Insert("nl.miek.c.a", "xx")
 	r.Insert("nl.miek.c.c", "xx")
-	next := map[string]string{"nl.miek": "nl.miek.a",
+	next := map[string]string{
+		"nl.miek":     "nl.miek.a",
 		"nl.miek.a":   "nl.miek.c",
 		"nl.miek.c.a": "nl.miek.c.c",
 		"nl.miek.c.c": "nl.miek.d",
+		"nl.miek.d":   "nl.miek",
 	}
 	for x, nxt := range next {
 		r1, _ := r.Find(x)
@@ -120,10 +122,29 @@ func TestNext(t *testing.T) {
 			t.Fail()
 		}
 	}
-	r1, _ := r.Find("nl.miek.d")
-	if r1.Next() != nil {
-		t.Logf("Failed to find apex")
-		t.Fail()
+}
+
+func TestPrev(t *testing.T) {
+	r := New()
+	r.Insert("nl.miek", "xx")
+	r.Insert("nl.miek.a", "xx")
+	r.Insert("nl.miek.c", "xx")
+	r.Insert("nl.miek.d", "xx")
+	r.Insert("nl.miek.c.a", "xx")
+	r.Insert("nl.miek.c.c", "xx")
+	prev := map[string]string{
+		"nl.miek.a":   "nl.miek",
+		"nl.miek.c":   "nl.miek.a",
+		"nl.miek.c.c": "nl.miek.c.a",
+		"nl.miek.d":   "nl.miek.c.c",
+		"nl.miek":     "nl.miek.d",
+	}
+	for x, prv := range prev {
+		r1, _ := r.Find(x)
+		if n := r1.Prev(); n.Key() != prv {
+			t.Logf("Prev of %s must be %s, is %s\n", x, prv, n.Key())
+			t.Fail()
+		}
 	}
 }
 

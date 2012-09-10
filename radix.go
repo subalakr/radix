@@ -206,7 +206,7 @@ func (r *Radix) Find(key string) (node *Radix, exact bool) {
 			return child, true
 		}
 		r := child
-		for r.Value == nil  {
+		for r.Value == nil {
 			if r.parent == nil {
 				return nil, false // Root
 			}
@@ -265,7 +265,7 @@ func (r *Radix) FindFunc(key string, f func(interface{}) bool) (node *Radix, exa
 			return child, true, false
 		}
 		r := child
-		for r.Value == nil  {
+		for r.Value == nil {
 			if r.parent == nil {
 				return nil, false, false // Root
 			}
@@ -300,10 +300,16 @@ func (r *Radix) FindFunc(key string, f func(interface{}) bool) (node *Radix, exa
 // terminates the root of the tree. Next does not return nodes with Value is nil,
 // so the caller is guaranteed to get a node with data, unless we hit the root node.
 func (r *Radix) Next() *Radix {
+	if r.parent == nil {
+		// The root node should have one child, which is the
+		// apex of the zone, return that
+		for _, x := range r.children { // only one
+			return x
+		}
+	}
 	switch len(r.children) {
-	case 0: // leaf-node, 
+	case 0: // leaf-node 
 		// Look in my parent to get a list of my peers
-		// r.parent is never nil?
 		neighbor, found := smallestSuccessor(r.parent.children, r.key[0])
 		if found {
 			ret := r.parent.children[neighbor]
@@ -327,11 +333,15 @@ func (r *Radix) Next() *Radix {
 
 // next goes up in the tree to look for nodes with a neighbor.
 // if found that neighbor is returned. If a parent has no neighbor
-// its parent is tried. This finishes at root, at which point nil 
-// is returned.
+// its parent is tried. This finishes at first non-nil Value node
+// in the tree: the shortest key added.
 func (r *Radix) next() *Radix {
 	if r.parent == nil {
-		return nil
+		// The root node should have one child, which is the
+		// apex of the zone, return that
+		for _, x := range r.children { // only one
+			return x
+		}
 	}
 	neighbor, found := smallestSuccessor(r.parent.children, r.key[0])
 	if found {
@@ -344,9 +354,43 @@ func (r *Radix) next() *Radix {
 	return r.parent.next()
 }
 
-// Prev is the opposite of Next. Prev returns the previous node in the tree.
+// Prev returns the previous node in the tree, it is the opposite of Next.
 func (r *Radix) Prev() *Radix {
-	return nil
+	if r.parent == nil {
+		// The root node should have one child, which is the
+		// apex of the zone, return that
+		for _, x := range r.children { // only one
+			return x
+		}
+	}
+	neighbor, found := largestPredecessor(r.parent.children, r.key[0])
+	if found {
+		ret := r.parent.children[neighbor]
+		return ret.prev()
+	}
+	// leaf-node, but no left neighbor, go up...
+	r = r.parent
+	for r.Value == nil {
+		if r.parent == nil {
+			// return largest right leaf node
+			for len(r.children) != 0 {
+				r = r.children[rightMostChild(r.children)]
+			}
+			return r
+		}
+		r = r.parent
+	}
+	return r
+}
+
+// prev does down in the tree and selected the right most child until a leaf
+// node is hit.
+func (r *Radix) prev() *Radix {
+	if len(r.children) == 0 {
+		return r
+	}
+	r = r.children[rightMostChild(r.children)]
+	return r.prev()
 }
 
 // Remove removes any value set to key. It returns the removed node or nil if the
