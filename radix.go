@@ -235,6 +235,61 @@ func (r *Radix) Find(key string) (node *Radix, exact bool) {
 	return child.Find(key[prefixEnd:])
 }
 
+// FindFunc works just like Find, but each non-nill Value of each node traversed during
+// the search is given to the function f. Is this function returns true, that node is returned
+// and the search stops.
+func (r *Radix) FindFunc(key string, f func(interface{}) bool) (node *Radix, exact bool, funcfound bool) {
+	if key == "" {
+		return nil, false, false
+	}
+	child, ok := r.children[key[0]]
+	if !ok {
+		if r.Value != nil {
+			return r, false, false
+		}
+		for r.Value == nil {
+			if r.parent == nil {
+				return nil, false, false // Root
+			}
+			r = r.parent
+		}
+		return r, false, false
+	}
+
+	if key == child.key {
+		if child.Value != nil {
+			return child, true, false
+		}
+		r := child
+		for r.Value == nil  {
+			if r.parent == nil {
+				return nil, false, false // Root
+			}
+			r = r.parent
+		}
+		return r, false, false
+	}
+
+	commonPrefix, prefixEnd := longestCommonPrefix(key, child.key)
+
+	// if child.key is not completely contained in key, abort [e.g. trying to find "ab" in "abc"]
+	if child.key != commonPrefix {
+		if r.Value != nil {
+			return r, false, false
+		}
+		for r.Value == nil {
+			if r.parent == nil {
+				return nil, false, false
+			}
+			r = r.parent
+		}
+		return r, false, false
+	}
+
+	// find the key left of key in child
+	return child.FindFunc(key[prefixEnd:], f)
+}
+
 // Next returns the next node in the tree. For non-leaf nodes this is the left most
 // child node. For leaf nodes this is the first neighbor to the right. If no such
 // neighbor is found, it's the first existing neighbor of a parent. This finally
