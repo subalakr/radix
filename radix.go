@@ -235,9 +235,10 @@ func (r *Radix) Find(key string) (node *Radix, exact bool) {
 	return child.Find(key[prefixEnd:])
 }
 
-// FindFunc works just like Find, but each non-nill Value of each node traversed during
+// FindFunc works just like Find, but each non-nil Value of each node traversed during
 // the search is given to the function f. Is this function returns true, that node is returned
-// and the search stops, exact is set to false and funcfound to true.
+// and the search stops, exact is set to false and funcfound to true. If during the search f does 
+// not return true FindFunc behaves just as Find.
 func (r *Radix) FindFunc(key string, f func(interface{}) bool) (node *Radix, exact bool, funcfound bool) {
 	if key == "" {
 		return nil, false, false
@@ -298,7 +299,7 @@ func (r *Radix) FindFunc(key string, f func(interface{}) bool) (node *Radix, exa
 // child node. For leaf nodes this is the first neighbor to the right. If no such
 // neighbor is found, it's the first existing neighbor of a parent. This finally
 // terminates the root of the tree. Next does not return nodes with Value is nil,
-// so the caller is guaranteed to get a node with data, unless we hit the root node.
+// so the caller is guaranteed to get a node with data.
 func (r *Radix) Next() *Radix {
 	if r.parent == nil {
 		// The root node should have one child, which is the
@@ -355,6 +356,7 @@ func (r *Radix) next() *Radix {
 }
 
 // Prev returns the previous node in the tree, it is the opposite of Next.
+// The following holds true: r.Next().Prev().Key() = r.Key()
 func (r *Radix) Prev() *Radix {
 	if r.parent == nil {
 		// The root node should have one child, which is the

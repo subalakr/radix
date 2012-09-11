@@ -181,6 +181,10 @@ func TestNextPrev(t *testing.T) {
 		t.Logf("r2 prev should be nl.miek")
 		t.Fail()
 	}
+	if r1.Next().Prev().Key() != r1.Key() {
+		t.Logf("Next()->Prev() should map to me")
+		t.Fail()
+	}
 }
 
 func ExampleFind() {
