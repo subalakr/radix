@@ -161,6 +161,26 @@ func TestNextPrev(t *testing.T) {
 		t.Logf("I'm not my own prev")
 		t.Fail()
 	}
+	// Add another element, making it two (with non-nil values)
+	r.Insert("nl.miek.a", "xx")
+	// r1 hasn't changed
+	r2, _ := r.Find("nl.miek.a")
+	if r1.Next().Key() != "nl.miek.a" {
+		t.Logf("r1 next should be nl.miek.a")
+		t.Fail()
+	}
+	if r2.Next().Key() != "nl.miek" {
+		t.Logf("r2 next should be nl.miek")
+		t.Fail()
+	}
+	if r1.Prev().Key() != "nl.miek.a" {
+		t.Logf("r1 prev should be nl.miek.a")
+		t.Fail()
+	}
+	if r2.Prev().Key() != "nl.miek" {
+		t.Logf("r2 prev should be nl.miek")
+		t.Fail()
+	}
 }
 
 func ExampleFind() {
