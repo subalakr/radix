@@ -148,6 +148,21 @@ func TestPrev(t *testing.T) {
 	}
 }
 
+func TestNextPrev(t *testing.T) {
+	r := New()
+	r.Insert("nl.miek", "xx")
+
+	r1, _ := r.Find("nl.miek")
+	if r1.Next().Key() != "nl.miek" {
+		t.Logf("I'm not my own next")
+		t.Fail()
+	}
+	if r1.Prev().Key() != "nl.miek" {
+		t.Logf("I'm not my own prev")
+		t.Fail()
+	}
+}
+
 func ExampleFind() {
 	r := New()
 	r.Insert("tester", nil)
