@@ -183,6 +183,13 @@ func TestNextPrev(t *testing.T) {
 	}
 }
 
+func TestNextPrevEmpty(t *testing.T) {
+	r := New()
+	nxt, prev := r.Next(), r.Prev()
+	nxt = nxt
+	prev = prev
+}
+
 func ExampleFind() {
 	r := New()
 	r.Insert("tester", nil)

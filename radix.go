@@ -300,6 +300,9 @@ func (r *Radix) FindFunc(key string, f func(interface{}) bool) (node *Radix, exa
 // terminates the root of the tree. Next does not return nodes with Value is nil,
 // so the caller is guaranteed to get a node with data, unless we hit the root node.
 func (r *Radix) Next() *Radix {
+	if len(r.key) == 0 {
+		return nil	// Empty tree
+	}
 	if r.parent == nil {
 		// The root node should have one child, which is the
 		// apex of the zone, return that
@@ -356,6 +359,9 @@ func (r *Radix) next() *Radix {
 
 // Prev returns the previous node in the tree, it is the opposite of Next.
 func (r *Radix) Prev() *Radix {
+	if len(r.key) == 0 {
+		return nil	// Empty tree
+	}
 	if r.parent == nil {
 		// The root node should have one child, which is the
 		// apex of the zone, return that
