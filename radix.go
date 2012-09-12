@@ -302,7 +302,7 @@ func (r *Radix) FindFunc(key string, f func(interface{}) bool) (node *Radix, exa
 // so the caller is guaranteed to get a node with data.
 func (r *Radix) Next() *Radix {
 	if len(r.key) == 0 {
-		return nil	// Empty tree
+		return nil // Empty tree
 	}
 	if r.parent == nil {
 		// The root node should have one child, which is the
@@ -362,7 +362,7 @@ func (r *Radix) next() *Radix {
 // The following holds true: r.Next().Prev().Key() = r.Key()
 func (r *Radix) Prev() *Radix {
 	if len(r.key) == 0 {
-		return nil	// Empty tree
+		return nil // Empty tree
 	}
 	if r.parent == nil {
 		// The root node should have one child, which is the
@@ -442,8 +442,8 @@ func (r *Radix) Remove(key string) *Radix {
 	return child.Remove(key[prefixEnd:])
 }
 
-// Do traverses the tree r in an unordered way and calls function f on each (non-nil) node,
-// f's parameters is r.Value.
+// Do traverses the tree r in an unordered fashion and calls function f on each (non-nil) node,
+// f's parameter is r.Value.
 func (r *Radix) Do(f func(interface{})) {
 	if r == nil {
 		return
@@ -457,18 +457,45 @@ func (r *Radix) Do(f func(interface{})) {
 }
 
 // NextDo traverses the tree r in Next-order and calls function f on each node,
-// f's parameters is be r.Value.
+// f's parameter is be r.Value.
 func (r *Radix) NextDo(f func(interface{})) {
-	if r == nil {
+	if r == nil || len(r.children) == 0 {
 		return
 	}
-	// TODO value == nil when called from root
+	if r.parent == nil {
+		// root of the tree descend to the first node
+		for _, x := range r.children { // only one
+			r = x
+		}
+
+	}
 	k := r.Key()
 	f(r.Value)
 	r = r.Next()
 	for r.Key() != k {
 		f(r.Value)
 		r = r.Next()
+	}
+}
+
+// PrevDo traverses the tree r in Prev-order and calls function f on each node,
+// f's parameter is be r.Value.
+func (r *Radix) PrevDo(f func(interface{})) {
+	if r == nil || len(r.children) == 0 {
+		return
+	}
+	if r.parent == nil {
+		// root of the tree descend to the first node
+		for _, x := range r.children { // only one
+			r = x
+		}
+	}
+	k := r.Key()
+	f(r.Value)
+	r = r.Prev()
+	for r.Key() != k {
+		f(r.Value)
+		r = r.Prev()
 	}
 }
 
