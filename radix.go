@@ -453,6 +453,20 @@ func (r *Radix) Do(f func(interface{})) {
 	}
 }
 
+// NextDo traversed the tree r by means of Next and calls function f on each node, f's parameters will be r.Value.
+// The bahvo
+// undefined if f changes r.                                                       
+func (r *Radix) Do(f func(interface{})) {
+	if r != nil {
+		if r.Value != nil {
+			f(r.Value)
+		}
+		for _, child := range r.children {
+			child.Do(f)
+		}
+	}
+}
+
 // Len computes the number of nodes in the radix tree r.
 func (r *Radix) Len() int {
 	i := 0
