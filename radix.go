@@ -442,30 +442,33 @@ func (r *Radix) Remove(key string) *Radix {
 	return child.Remove(key[prefixEnd:])
 }
 
-// Do calls function f on each node with Value is non-nil in the tree. f's parameter will be r.Value. The behavior of Do is              
-// undefined if f changes r.                                                       
+// Do traverses the tree r in an unordered way and calls function f on each (non-nil) node,
+// f's parameters is r.Value.
 func (r *Radix) Do(f func(interface{})) {
-	if r != nil {
-		if r.Value != nil {
-			f(r.Value)
-		}
-		for _, child := range r.children {
-			child.Do(f)
-		}
+	if r == nil {
+		return
+	}
+	if r.Value != nil {
+		f(r.Value)
+	}
+	for _, child := range r.children {
+		child.Do(f)
 	}
 }
 
-// NextDo traversed the tree r by means of Next and calls function f on each node, f's parameters will be r.Value.
-// The bahvo
-// undefined if f changes r.                                                       
+// NextDo traverses the tree r in Next-order and calls function f on each node,
+// f's parameters is be r.Value.
 func (r *Radix) NextDo(f func(interface{})) {
-	if r != nil {
-		if r.Value != nil {
-			f(r.Value)
-		}
-		for _, child := range r.children {
-			child.Do(f)
-		}
+	if r == nil {
+		return
+	}
+	// TODO value == nil when called from root
+	k := r.Key()
+	f(r.Value)
+	r = r.Next()
+	for r.Key() != k {
+		f(r.Value)
+		r = r.Next()
 	}
 }
 
