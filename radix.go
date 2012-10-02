@@ -180,7 +180,7 @@ func (r *Radix) Insert(key string, value interface{}) *Radix {
 // r must be the root of the Radix tree, although this is not enforced. If the node is located
 // it is returned and exact is set to true. If the node found has a nil Value, Find will go
 // up in the tree to look for a non-nil Value. If this happens exact is set to false.
-// If the node is not found, the immediate predecessor
+// Also if the node is not found, the immediate predecessor
 // is returned and exact is set to false. If this node also has a nil Value the same thing
 // happens: the tree is search upwards, until the first non-nil Value node is found. 
 func (r *Radix) Find(key string) (node *Radix, exact bool) {
