@@ -413,10 +413,8 @@ func (r *Radix) Remove(key string) *Radix {
 	if key == child.key {
 		switch len(child.children) {
 		case 0:
-			// remove child from current node if child has no children on its own
 			delete(r.children, key[0])
 		case 1:
-			// since len(child.children) == 1, there is only one subchild; we have to use range to get the value, though, since we do not know the key
 			for _, subchild := range child.children {
 				// essentially moves the subchild up one level to replace the child we want to delete, while keeping the key of child
 				child.key = child.key + subchild.key
@@ -425,20 +423,15 @@ func (r *Radix) Remove(key string) *Radix {
 				child.parent = r
 			}
 		default:
-			// if there are >= 2 subchilds, we can only set the value to nil, thus delete any value set to key
 			child.Value = nil
 		}
 		return child
 	}
 
-	// Node has not been foundJ, key != child.keys
-
 	commonPrefix, prefixEnd := longestCommonPrefix(key, child.key)
-	// if child.key is not completely contained in key, abort [e.g. trying to delete "ab" from "abc"]
 	if child.key != commonPrefix {
 		return nil
 	}
-	// else: cut off common prefix and delete left string in child
 	return child.Remove(key[prefixEnd:])
 }
 
