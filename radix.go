@@ -305,7 +305,7 @@ func (r *Radix) Next() *Radix {
 		return r
 	}
 	if r.parent == nil && len(r.children) == 0 {
-		return r
+		return r	// Empty tree
 	}
 
 	switch len(r.children) {
@@ -357,15 +357,17 @@ func (r *Radix) next() *Radix {
 // Prev returns the previous node in the tree, it is the opposite of Next.
 // The following holds true: r.Next().Prev().Key() = r.Key()
 func (r *Radix) Prev() *Radix {
-	if len(r.key) == 0 {
-		return nil // Empty tree
+	if r == nil {
+		return r
+	}
+	if r.parent == nil && len(r.children) == 0 {
+		return r	 // Empty tree
 	}
 	if r.parent == nil {
-		// The root node should have one child, which is the
-		// apex of the zone, return that
-		for _, x := range r.children { // only one
-			return x
+		for r.Value == nil {
+			r = r.children[rightMostChild(r.children)]
 		}
+		return r
 	}
 	neighbor, found := largestPredecessor(r.parent.children, r.key[0])
 	if found {
@@ -457,11 +459,9 @@ func (r *Radix) NextDo(f func(interface{})) {
 	// r.Value still may be nil, because there is no guarantee the 
 	// node after the root's node has a value.
 	if r.Value != nil {
-		println("VALUE IS NIL")
 		f(r.Value)
 	}
 	k := r.Key()	// This will always be something meaningful.
-	println("key", k)
 	r = r.Next()
 	for r.Key() != k {
 		if r.Value != nil {
@@ -472,24 +472,23 @@ func (r *Radix) NextDo(f func(interface{})) {
 }
 
 // PrevDo traverses the tree r in Prev-order and calls function f on each node,
-// f's parameter is be r.Value.
+// f's parameter is be r.Value, f will never be called with a nil value.
 func (r *Radix) PrevDo(f func(interface{})) {
 	if r == nil || len(r.children) == 0 {
 		return
 	}
 	if r.parent == nil {
-		// root of the tree descend to the first node
-		for _, x := range r.children { // only one
-			r = x
-		}
+		r = r.Next()
 	}
 	if r.Value != nil {
 		f(r.Value)
 	}
-	k := r.Key()
+	k := r.Key()	// Will be meaningful.
 	r = r.Prev()
 	for r.Key() != k {
-		f(r.Value)
+		if r.Value != nil {
+			f(r.Value)
+		}
 		r = r.Prev()
 	}
 }
