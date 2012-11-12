@@ -148,6 +148,9 @@ func TestPrev(t *testing.T) {
 	}
 }
 
+//xn--fake-rr4221.miek.nl.	345600	IN	NS	ns2.example.com.
+//xn--fake-rr4223.miek.nl.	345600	IN	NS	ns1.example.com
+
 func TestNextPrev(t *testing.T) {
 	r := New()
 	r.Insert("nl.miek", "xx")
@@ -189,9 +192,10 @@ func TestNextPrev(t *testing.T) {
 
 func TestNextPrevEmpty(t *testing.T) {
 	r := New()
-	nxt, prev := r.Next(), r.Prev()
-	nxt = nxt
-	prev = prev
+	nxt := r.Next()
+	prev := r.Prev()
+	_ = nxt
+	_ = prev
 }
 
 func ExampleFind() {

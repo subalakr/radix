@@ -298,19 +298,16 @@ func (r *Radix) FindFunc(key string, f func(interface{}) bool) (node *Radix, exa
 // Next returns the next node in the tree. For non-leaf nodes this is the left most
 // child node. For leaf nodes this is the first neighbor to the right. If no such
 // neighbor is found, it's the first existing neighbor of a parent. This finally
-// terminates the root of the tree. Next does not return nodes with Value is nil,
-// so the caller is guaranteed to get a node with data.
+// terminates the root of the tree. Next can return nodes with Value is nil.
 func (r *Radix) Next() *Radix {
-	if len(r.key) == 0 {
-		return nil // Empty tree
+	// test for empty tree
+	if r == nil {
+		return r
 	}
-	if r.parent == nil {
-		// The root node should have one child, which is the
-		// apex of the zone, return that
-		for _, x := range r.children { // only one
-			return x
-		}
+	if r.parent == nil && len(r.children) == 0 {
+		return r
 	}
+
 	switch len(r.children) {
 	case 0: // leaf-node 
 		// Look in my parent to get a list of my peers
@@ -341,11 +338,10 @@ func (r *Radix) Next() *Radix {
 // in the tree: the shortest key added.
 func (r *Radix) next() *Radix {
 	if r.parent == nil {
-		// The root node should have one child, which is the
-		// apex of the zone, return that
-		for _, x := range r.children { // only one
-			return x
+		for r.Value == nil {
+			r = r.children[leftMostChild(r.children)]
 		}
+		return r
 	}
 	neighbor, found := smallestSuccessor(r.parent.children, r.key[0])
 	if found {
@@ -450,23 +446,27 @@ func (r *Radix) Do(f func(interface{})) {
 }
 
 // NextDo traverses the tree r in Next-order and calls function f on each node,
-// f's parameter is be r.Value.
+// f's parameter is be r.Value, f will never be called with a nil value.
 func (r *Radix) NextDo(f func(interface{})) {
 	if r == nil || len(r.children) == 0 {
 		return
 	}
 	if r.parent == nil {
-		// root of the tree descend to the first node
-		for _, x := range r.children { // only one
-			r = x
-		}
-
+		r = r.Next()
 	}
-	k := r.Key()
-	f(r.Value)
+	// r.Value still may be nil, because there is no guarantee the 
+	// node after the root's node has a value.
+	if r.Value != nil {
+		println("VALUE IS NIL")
+		f(r.Value)
+	}
+	k := r.Key()	// This will always be something meaningful.
+	println("key", k)
 	r = r.Next()
 	for r.Key() != k {
-		f(r.Value)
+		if r.Value != nil {
+			f(r.Value)
+		}
 		r = r.Next()
 	}
 }
@@ -483,8 +483,10 @@ func (r *Radix) PrevDo(f func(interface{})) {
 			r = x
 		}
 	}
+	if r.Value != nil {
+		f(r.Value)
+	}
 	k := r.Key()
-	f(r.Value)
 	r = r.Prev()
 	for r.Key() != k {
 		f(r.Value)
