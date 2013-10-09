@@ -1,13 +1,32 @@
-// Package radix implements a radix tree.                                                           
-//                                                                                                  
-// A radix tree is defined in:                                                                      
-//    Donald R. Morrison. "PATRICIA -- practical algorithm to retrieve                              
-//    information coded in alphanumeric". Journal of the ACM, 15(4):514-534,                        
-//    October 1968                                                                                  
+// Package radix implements a radix tree.
+//
+// A radix tree is defined in:
+//    Donald R. Morrison. "PATRICIA -- practical algorithm to retrieve
+//    information coded in alphanumeric". Journal of the ACM, 15(4):514-534,
+//    October 1968
 //
 // Also see http://en.wikipedia.org/wiki/Radix_tree for more information.
 //
 package radix
+
+import (
+	"io"
+)
+
+var MaxKeySize int
+
+func readKey(r io.Reader) string {
+	if MaxKeySize == 0 {
+		MaxKeySize = 512
+	}
+
+	b := make([]byte, MaxKeySize)
+
+	if n, err := r.Read(b); err == nil && n > 0 {
+		return string(b)
+	}
+	return ""
+}
 
 // longestCommonPrefix returns the longest prefiex key and bar have
 // in common.
@@ -132,9 +151,18 @@ func (r *Radix) Up() *Radix {
 	return r
 }
 
+func (r *Radix) Insert(reader io.Reader, value interface{}) *Radix {
+	key := readKey(reader)
+	if key != "" {
+        return nil
+	}
+    return r.insert(key, value)
+}
+
 // Insert inserts the value into the tree with the specified key. It returns the radix node
 // it just inserted, r must the root of the radix tree.
-func (r *Radix) Insert(key string, value interface{}) *Radix {
+func (r *Radix) insert(key string, value interface{}) *Radix {
+
 	// look up the child starting with the same letter as key
 	// if there is no child with the same starting letter, insert a new one
 	child, ok := r.children[key[0]]
@@ -151,7 +179,7 @@ func (r *Radix) Insert(key string, value interface{}) *Radix {
 	commonPrefix, prefixEnd := longestCommonPrefix(key, child.key)
 
 	if commonPrefix == child.key {
-		return child.Insert(key[prefixEnd:], value)
+		return child.insert(key[prefixEnd:], value)
 	}
 
 	// create new child node to replace current child
@@ -169,7 +197,7 @@ func (r *Radix) Insert(key string, value interface{}) *Radix {
 
 	// if there are key left of key, insert them into our new child
 	if key != newChild.key {
-		newChild.Insert(key[prefixEnd:], value)
+		newChild.insert(key[prefixEnd:], value)
 	} else {
 		newChild.Value = value
 	}
@@ -182,8 +210,16 @@ func (r *Radix) Insert(key string, value interface{}) *Radix {
 // up in the tree to look for a non-nil Value. If this happens exact is set to false.
 // Also if the node is not found, the immediate predecessor
 // is returned and exact is set to false. If this node also has a nil Value the same thing
-// happens: the tree is search upwards, until the first non-nil Value node is found. 
-func (r *Radix) Find(key string) (node *Radix, exact bool) {
+// happens: the tree is search upwards, until the first non-nil Value node is found.
+
+func (r *Radix) Find(reader io.Reader) (node *Radix, exact bool) {
+	key := readKey(reader)
+
+    return r.find(key) 
+}
+
+func (r *Radix) find(key string) (node *Radix, exact bool) {
+
 	if key == "" {
 		return nil, false
 	}
@@ -232,14 +268,20 @@ func (r *Radix) Find(key string) (node *Radix, exact bool) {
 	}
 
 	// find the key left of key in child
-	return child.Find(key[prefixEnd:])
+	return child.find(key[prefixEnd:])
 }
 
 // FindFunc works just like Find, but each non-nil Value of each node traversed during
 // the search is given to the function f. Is this function returns true, that node is returned
-// and the search stops, exact is set to false and funcfound to true. If during the search f does 
+// and the search stops, exact is set to false and funcfound to true. If during the search f does
 // not return true FindFunc behaves just as Find.
-func (r *Radix) FindFunc(key string, f func(interface{}) bool) (node *Radix, exact bool, funcfound bool) {
+func (r *Radix) FindFunc(reader io.Reader, f func(interface{}) bool) (node *Radix, exact bool, funcfound bool) {
+    key := readKey(reader)
+    return r.findFunc(key, f)
+}
+
+func (r *Radix) findFunc(key string, f func(interface{}) bool) (node *Radix, exact bool, funcfound bool) {
+
 	if key == "" {
 		return nil, false, false
 	}
@@ -292,24 +334,27 @@ func (r *Radix) FindFunc(key string, f func(interface{}) bool) (node *Radix, exa
 	}
 
 	// find the key left of key in child
-	return child.FindFunc(key[prefixEnd:], f)
+    return child.findFunc(key[prefixEnd:], f)
 }
 
 // Next returns the next node in the tree. For non-leaf nodes this is the left most
 // child node. For leaf nodes this is the first neighbor to the right. If no such
 // neighbor is found, it's the first existing neighbor of a parent. This finally
-// terminates the root of the tree. Next can return nodes with Value is nil.
+// terminates the root of the tree. Next does not return nodes with Value is nil,
+// so the caller is guaranteed to get a node with data.
 func (r *Radix) Next() *Radix {
-	// test for empty tree
-	if r == nil {
-		return r
+	if len(r.key) == 0 {
+		return nil // Empty tree
 	}
-	if r.parent == nil && len(r.children) == 0 {
-		return r	// Empty tree
+	if r.parent == nil {
+		// The root node should have one child, which is the
+		// apex of the zone, return that
+		for _, x := range r.children { // only one
+			return x
+		}
 	}
-
 	switch len(r.children) {
-	case 0: // leaf-node 
+	case 0: // leaf-node
 		// Look in my parent to get a list of my peers
 		neighbor, found := smallestSuccessor(r.parent.children, r.key[0])
 		if found {
@@ -338,10 +383,11 @@ func (r *Radix) Next() *Radix {
 // in the tree: the shortest key added.
 func (r *Radix) next() *Radix {
 	if r.parent == nil {
-		for r.Value == nil {
-			r = r.children[leftMostChild(r.children)]
+		// The root node should have one child, which is the
+		// apex of the zone, return that
+		for _, x := range r.children { // only one
+			return x
 		}
-		return r
 	}
 	neighbor, found := smallestSuccessor(r.parent.children, r.key[0])
 	if found {
@@ -357,17 +403,15 @@ func (r *Radix) next() *Radix {
 // Prev returns the previous node in the tree, it is the opposite of Next.
 // The following holds true: r.Next().Prev().Key() = r.Key()
 func (r *Radix) Prev() *Radix {
-	if r == nil {
-		return r
-	}
-	if r.parent == nil && len(r.children) == 0 {
-		return r	 // Empty tree
+	if len(r.key) == 0 {
+		return nil // Empty tree
 	}
 	if r.parent == nil {
-		for r.Value == nil {
-			r = r.children[rightMostChild(r.children)]
+		// The root node should have one child, which is the
+		// apex of the zone, return that
+		for _, x := range r.children { // only one
+			return x
 		}
-		return r
 	}
 	neighbor, found := largestPredecessor(r.parent.children, r.key[0])
 	if found {
@@ -448,47 +492,44 @@ func (r *Radix) Do(f func(interface{})) {
 }
 
 // NextDo traverses the tree r in Next-order and calls function f on each node,
-// f's parameter is be r.Value, f will never be called with a nil value.
+// f's parameter is be r.Value.
 func (r *Radix) NextDo(f func(interface{})) {
 	if r == nil || len(r.children) == 0 {
 		return
 	}
 	if r.parent == nil {
-		r = r.Next()
+		// root of the tree descend to the first node
+		for _, x := range r.children { // only one
+			r = x
+		}
+
 	}
-	// r.Value still may be nil, because there is no guarantee the 
-	// node after the root's node has a value.
-	if r.Value != nil {
-		f(r.Value)
-	}
-	k := r.Key()	// This will always be something meaningful.
+	k := r.Key()
+	f(r.Value)
 	r = r.Next()
 	for r.Key() != k {
-		if r.Value != nil {
-			f(r.Value)
-		}
+		f(r.Value)
 		r = r.Next()
 	}
 }
 
 // PrevDo traverses the tree r in Prev-order and calls function f on each node,
-// f's parameter is be r.Value, f will never be called with a nil value.
+// f's parameter is be r.Value.
 func (r *Radix) PrevDo(f func(interface{})) {
 	if r == nil || len(r.children) == 0 {
 		return
 	}
 	if r.parent == nil {
-		r = r.Next()
+		// root of the tree descend to the first node
+		for _, x := range r.children { // only one
+			r = x
+		}
 	}
-	if r.Value != nil {
-		f(r.Value)
-	}
-	k := r.Key()	// Will be meaningful.
+	k := r.Key()
+	f(r.Value)
 	r = r.Prev()
 	for r.Key() != k {
-		if r.Value != nil {
-			f(r.Value)
-		}
+		f(r.Value)
 		r = r.Prev()
 	}
 }
