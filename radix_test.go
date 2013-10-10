@@ -2,6 +2,7 @@ package radix
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -9,7 +10,8 @@ func printit(r *Radix, level int) {
 	for i := 0; i < level; i++ {
 		fmt.Print("\t")
 	}
-	fmt.Printf("%p '%v'  value: '%v'    parent %p\n", r, r.key, r.Value, r.parent)
+
+	fmt.Printf("%p '%v' value: '%v' parent %p\n", r, r.key, r.Value, r.parent)
 	for _, child := range r.children {
 		printit(child, level+1)
 	}
@@ -17,10 +19,10 @@ func printit(r *Radix, level int) {
 
 func radixtree() *Radix {
 	r := New()
-	r.Insert("test", "a")
-	r.Insert("tester", "a")
-	r.Insert("team", "a")
-	r.Insert("te", "a")
+	r.Insert(strings.NewReader("test"), "a")
+	r.Insert(strings.NewReader("tester"), "a")
+	r.Insert(strings.NewReader("team"), "a")
+	r.Insert(strings.NewReader("te"), "a")
 	return r
 }
 
@@ -36,7 +38,6 @@ func validate(r *Radix) bool {
 	}
 	return true
 }
-
 func TestSuccessor(t *testing.T) {
 	a := make(map[byte]*Radix)
 	// fake fill it, this is randomized by Go
@@ -67,13 +68,13 @@ func TestInsert(t *testing.T) {
 	if r.Len() != 0 {
 		t.Log("Len should be 0", r.Len())
 	}
-	r.Insert("test", nil)
-	r.Insert("slow", nil)
-	r.Insert("water", nil)
-	r.Insert("tester", nil)
-	r.Insert("testering", nil)
-	r.Insert("rewater", nil)
-	r.Insert("waterrat", nil)
+	r.Insert(strings.NewReader("test"), nil)
+	r.Insert(strings.NewReader("slow"), nil)
+	r.Insert(strings.NewReader("water"), nil)
+	r.Insert(strings.NewReader("tester"), nil)
+	r.Insert(strings.NewReader("testering"), nil)
+	r.Insert(strings.NewReader("rewater"), nil)
+	r.Insert(strings.NewReader("waterrat"), nil)
 	if !validate(r) {
 		t.Log("Tree does not validate")
 		t.Fail()
@@ -82,8 +83,8 @@ func TestInsert(t *testing.T) {
 
 func TestRemove(t *testing.T) {
 	r := New()
-	r.Insert("test", "aa")
-	r.Insert("slow", "bb")
+	r.Insert(strings.NewReader("test"), "aa")
+	r.Insert(strings.NewReader("slow"), "bb")
 
 	if k := r.Remove("slow").Value; k != "bb" {
 		t.Log("should be bb", k)
@@ -94,20 +95,20 @@ func TestRemove(t *testing.T) {
 		t.Log("should be nil")
 		t.Fail()
 	}
-	r.Insert("test", "aa")
-	r.Insert("tester", "aa")
-	r.Insert("testering", "aa")
+	r.Insert(strings.NewReader("test"), "aa")
+	r.Insert(strings.NewReader("tester"), "aa")
+	r.Insert(strings.NewReader("testering"), "aa")
 	//	r.Find("tester").Remove("test")
 }
 
 func TestNext(t *testing.T) {
 	r := New()
-	r.Insert("nl.miek", "xx")
-	r.Insert("nl.miek.a", "xx")
-	r.Insert("nl.miek.c", "xx")
-	r.Insert("nl.miek.d", "xx")
-	r.Insert("nl.miek.c.a", "xx")
-	r.Insert("nl.miek.c.c", "xx")
+	r.Insert(strings.NewReader("nl.miek"), "xx")
+	r.Insert(strings.NewReader("nl.miek.a"), "xx")
+	r.Insert(strings.NewReader("nl.miek.c"), "xx")
+	r.Insert(strings.NewReader("nl.miek.d"), "xx")
+	r.Insert(strings.NewReader("nl.miek.c.a"), "xx")
+	r.Insert(strings.NewReader("nl.miek.c.c"), "xx")
 	next := map[string]string{
 		"nl.miek":     "nl.miek.a",
 		"nl.miek.a":   "nl.miek.c",
@@ -116,8 +117,10 @@ func TestNext(t *testing.T) {
 		"nl.miek.d":   "nl.miek",
 	}
 	for x, nxt := range next {
-		r1, _ := r.Find(x)
+		r1, _ := r.Find(strings.NewReader(x))
 		if n := r1.Next(); n.Key() != nxt {
+			fmt.Println(len(n.Key()))
+			fmt.Println(len(nxt))
 			t.Logf("Next of %s must be %s, is %s\n", x, nxt, n.Key())
 			t.Fail()
 		}
@@ -126,12 +129,12 @@ func TestNext(t *testing.T) {
 
 func TestPrev(t *testing.T) {
 	r := New()
-	r.Insert("nl.miek", "xx")
-	r.Insert("nl.miek.a", "xx")
-	r.Insert("nl.miek.c", "xx")
-	r.Insert("nl.miek.d", "xx")
-	r.Insert("nl.miek.c.a", "xx")
-	r.Insert("nl.miek.c.c", "xx")
+	r.Insert(strings.NewReader("nl.miek"), "xx")
+	r.Insert(strings.NewReader("nl.miek.a"), "xx")
+	r.Insert(strings.NewReader("nl.miek.c"), "xx")
+	r.Insert(strings.NewReader("nl.miek.d"), "xx")
+	r.Insert(strings.NewReader("nl.miek.c.a"), "xx")
+	r.Insert(strings.NewReader("nl.miek.c.c"), "xx")
 	prev := map[string]string{
 		"nl.miek.a":   "nl.miek",
 		"nl.miek.c":   "nl.miek.a",
@@ -140,7 +143,7 @@ func TestPrev(t *testing.T) {
 		"nl.miek":     "nl.miek.d",
 	}
 	for x, prv := range prev {
-		r1, _ := r.Find(x)
+		r1, _ := r.Find(strings.NewReader(x))
 		if n := r1.Prev(); n.Key() != prv {
 			t.Logf("Prev of %s must be %s, is %s\n", x, prv, n.Key())
 			t.Fail()
@@ -153,9 +156,9 @@ func TestPrev(t *testing.T) {
 
 func TestNextPrev(t *testing.T) {
 	r := New()
-	r.Insert("nl.miek", "xx")
+	r.Insert(strings.NewReader("nl.miek"), "xx")
 
-	r1, _ := r.Find("nl.miek")
+	r1, _ := r.Find(strings.NewReader("nl.miek"))
 	if r1.Next().Key() != "nl.miek" {
 		t.Logf("I'm not my own next")
 		t.Fail()
@@ -165,9 +168,9 @@ func TestNextPrev(t *testing.T) {
 		t.Fail()
 	}
 	// Add another element, making it two (with non-nil values)
-	r.Insert("nl.miek.a", "xx")
+	r.Insert(strings.NewReader("nl.miek.a"), "xx")
 	// r1 hasn't changed
-	r2, _ := r.Find("nl.miek.a")
+	r2, _ := r.Find(strings.NewReader("nl.miek.a"))
 	if r1.Next().Key() != "nl.miek.a" {
 		t.Logf("r1 next should be nl.miek.a")
 		t.Fail()
@@ -189,7 +192,6 @@ func TestNextPrev(t *testing.T) {
 		t.Fail()
 	}
 }
-
 func TestNextPrevEmpty(t *testing.T) {
 	r := New()
 	nxt := r.Next()
@@ -200,10 +202,11 @@ func TestNextPrevEmpty(t *testing.T) {
 
 func ExampleFind() {
 	r := New()
-	r.Insert("tester", nil)
-	r.Insert("testering", nil)
-	r.Insert("te", nil)
-	r.Insert("testeringandmore", nil)
+
+	r.Insert(strings.NewReader("tester"), nil)
+	r.Insert(strings.NewReader("testering"), nil)
+	r.Insert(strings.NewReader("te"), nil)
+	r.Insert(strings.NewReader("testeringandmore"), nil)
 	iter(r)
 	// Output:
 	// prefix te
@@ -216,6 +219,7 @@ func iter(r *Radix) {
 	if r.Key() != "" {
 		fmt.Printf("prefix %s\n", r.Key())
 	}
+	//	fmt.Println(len(r.children))
 	for _, child := range r.children {
 		iter(child)
 	}
@@ -227,6 +231,6 @@ func BenchmarkFind(b *testing.B) {
 	b.StartTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = r.Find("tester")
+		_, _ = r.Find(strings.NewReader("tester"))
 	}
 }

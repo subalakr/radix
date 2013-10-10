@@ -10,6 +10,7 @@
 package radix
 
 import (
+	"bytes"
 	"io"
 )
 
@@ -23,7 +24,9 @@ func readKey(r io.Reader) string {
 	b := make([]byte, MaxKeySize)
 
 	if n, err := r.Read(b); err == nil && n > 0 {
-		return string(b)
+		b = bytes.Trim(b, "\x00")
+		key := string(b)
+		return key
 	}
 	return ""
 }
@@ -153,15 +156,15 @@ func (r *Radix) Up() *Radix {
 
 func (r *Radix) Insert(reader io.Reader, value interface{}) *Radix {
 	key := readKey(reader)
-	if key != "" {
-        return nil
-	}
-    return r.insert(key, value)
+	return r.insert(key, value)
 }
 
 // Insert inserts the value into the tree with the specified key. It returns the radix node
 // it just inserted, r must the root of the radix tree.
 func (r *Radix) insert(key string, value interface{}) *Radix {
+	if key == "" {
+		return nil
+	}
 
 	// look up the child starting with the same letter as key
 	// if there is no child with the same starting letter, insert a new one
@@ -214,12 +217,10 @@ func (r *Radix) insert(key string, value interface{}) *Radix {
 
 func (r *Radix) Find(reader io.Reader) (node *Radix, exact bool) {
 	key := readKey(reader)
-
-    return r.find(key) 
+	return r.find(key)
 }
 
 func (r *Radix) find(key string) (node *Radix, exact bool) {
-
 	if key == "" {
 		return nil, false
 	}
@@ -276,12 +277,11 @@ func (r *Radix) find(key string) (node *Radix, exact bool) {
 // and the search stops, exact is set to false and funcfound to true. If during the search f does
 // not return true FindFunc behaves just as Find.
 func (r *Radix) FindFunc(reader io.Reader, f func(interface{}) bool) (node *Radix, exact bool, funcfound bool) {
-    key := readKey(reader)
-    return r.findFunc(key, f)
+	key := readKey(reader)
+	return r.findFunc(key, f)
 }
 
 func (r *Radix) findFunc(key string, f func(interface{}) bool) (node *Radix, exact bool, funcfound bool) {
-
 	if key == "" {
 		return nil, false, false
 	}
@@ -334,7 +334,7 @@ func (r *Radix) findFunc(key string, f func(interface{}) bool) (node *Radix, exa
 	}
 
 	// find the key left of key in child
-    return child.findFunc(key[prefixEnd:], f)
+	return child.findFunc(key[prefixEnd:], f)
 }
 
 // Next returns the next node in the tree. For non-leaf nodes this is the left most
